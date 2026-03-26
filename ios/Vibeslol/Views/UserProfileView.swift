@@ -10,9 +10,9 @@ struct UserProfileView: View {
     }
 
     private let columns = [
-        GridItem(.flexible(), spacing: 2),
-        GridItem(.flexible(), spacing: 2),
-        GridItem(.flexible(), spacing: 2)
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4)
     ]
 
     var body: some View {
@@ -27,65 +27,73 @@ struct UserProfileView: View {
                     VStack(spacing: 20) {
                         Spacer().frame(height: 16)
 
-                        // Avatar
-                        Circle()
-                            .fill(Color.vibePurple.opacity(0.2))
-                            .frame(width: 88, height: 88)
-                            .overlay(
-                                Text(String(user.username.prefix(1)).uppercased())
-                                    .font(.system(size: 36, weight: .bold))
-                                    .foregroundColor(.vibePurple)
-                            )
-                            .shadow(color: .vibePurple.opacity(0.4), radius: 12)
+                        // Horizontal header: avatar left, info + follow right
+                        HStack(spacing: 16) {
+                            // Avatar
+                            Circle()
+                                .fill(Color.vibePurple.opacity(0.2))
+                                .frame(width: 72, height: 72)
+                                .overlay(
+                                    Text(String(user.username.prefix(1)).uppercased())
+                                        .font(.system(size: 28, weight: .bold))
+                                        .foregroundColor(.vibePurple)
+                                )
+                                .shadow(color: .vibePurple.opacity(0.4), radius: 12)
 
-                        // Username
-                        Text("@\(user.username)")
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
+                            VStack(alignment: .leading, spacing: 8) {
+                                // Username
+                                Text("@\(user.username)")
+                                    .font(.title3.bold())
+                                    .foregroundColor(.white)
 
-                        // Follow button (only show for other users)
-                        if AuthManager.shared.userId != user.id {
-                            Button {
-                                viewModel.toggleFollow()
-                            } label: {
-                                Text(viewModel.isFollowing ? "Following" : "Follow")
-                                    .font(.subheadline.bold())
-                                    .foregroundColor(viewModel.isFollowing ? .white : .black)
-                                    .frame(width: 140, height: 36)
-                                    .background(
-                                        viewModel.isFollowing
-                                            ? Color.white.opacity(0.15)
-                                            : Color.vibePurple
-                                    )
-                                    .cornerRadius(18)
-                                    .overlay(
-                                        viewModel.isFollowing
-                                            ? RoundedRectangle(cornerRadius: 18)
-                                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                            : nil
-                                    )
+                                // Stats row
+                                HStack(spacing: 20) {
+                                    statItem(count: user.followingCount, label: "Following")
+                                    statItem(count: user.followerCount, label: "Followers")
+                                    statItem(count: user.videoCount, label: "Videos")
+                                }
+
+                                // Follow button (only for other users)
+                                if AuthManager.shared.userId != user.id {
+                                    Button {
+                                        viewModel.toggleFollow()
+                                    } label: {
+                                        Text(viewModel.isFollowing ? "Following" : "Follow")
+                                            .font(.caption.bold())
+                                            .foregroundColor(viewModel.isFollowing ? .white : .black)
+                                            .frame(width: 100, height: 30)
+                                            .background(
+                                                viewModel.isFollowing
+                                                    ? Color.white.opacity(0.15)
+                                                    : Color.vibePurple
+                                            )
+                                            .cornerRadius(15)
+                                            .overlay(
+                                                viewModel.isFollowing
+                                                    ? RoundedRectangle(cornerRadius: 15)
+                                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                                    : nil
+                                            )
+                                    }
+                                }
                             }
-                        }
 
-                        // Stats row
-                        HStack(spacing: 32) {
-                            statItem(count: user.followingCount, label: "Following")
-                            statItem(count: user.followerCount, label: "Followers")
-                            statItem(count: user.videoCount, label: "Videos")
+                            Spacer()
                         }
+                        .padding(.horizontal, 16)
 
                         // Bio
                         if let bio = user.bio, !bio.isEmpty {
                             Text(bio)
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.7))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 32)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 16)
                         }
 
                         Divider()
                             .background(Color.white.opacity(0.1))
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, 16)
 
                         // Video grid
                         if viewModel.videos.isEmpty {
@@ -99,15 +107,14 @@ struct UserProfileView: View {
                             }
                             .padding(.top, 40)
                         } else {
-                            LazyVGrid(columns: columns, spacing: 2) {
+                            LazyVGrid(columns: columns, spacing: 4) {
                                 ForEach(viewModel.videos) { video in
                                     VideoGridCell(video: video)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                             }
-                            .padding(.horizontal, 2)
+                            .padding(.horizontal, 4)
                         }
-
-                        Spacer().frame(height: 100)
                     }
                 }
             }
@@ -163,12 +170,12 @@ struct UserProfileView: View {
     }
 
     private func statItem(count: Int, label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Text("\(count)")
-                .font(.headline.bold())
+                .font(.subheadline.bold())
                 .foregroundColor(.white)
             Text(label)
-                .font(.caption)
+                .font(.system(size: 10))
                 .foregroundColor(.white.opacity(0.5))
         }
     }

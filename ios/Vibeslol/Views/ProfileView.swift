@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject private var auth = AuthManager.shared
+    @Binding var selectedTab: ContentView.Tab
     @State private var userVideos: [Video] = []
     @State private var isLoadingVideos = false
 
@@ -17,58 +18,81 @@ struct ProfileView: View {
 
             if let user = auth.currentUser {
                 ScrollView {
-                    VStack(spacing: 24) {
-                        Spacer().frame(height: 60)
+                    VStack(spacing: 20) {
+                        // Close / back button row
+                        HStack {
+                            Button {
+                                selectedTab = .feed
+                                HapticsService.shared.lightTap()
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.body.bold())
+                                    .foregroundColor(.white)
+                                    .frame(width: 36, height: 36)
+                                    .background(Circle().fill(Color.white.opacity(0.1)))
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 60)
 
-                        // Avatar
-                        Circle()
-                            .fill(Color.vibePurple.opacity(0.2))
-                            .frame(width: 88, height: 88)
-                            .overlay(
-                                Text(String(user.username.prefix(1)).uppercased())
-                                    .font(.system(size: 36, weight: .bold))
-                                    .foregroundColor(.vibePurple)
-                            )
-                            .shadow(color: .vibePurple.opacity(0.4), radius: 12)
-
-                        // Username
-                        Text("@\(user.username)")
-                            .font(.title2.bold())
-                            .foregroundColor(.white)
-
-                        // Anonymous badge
-                        if user.isAnonymous {
-                            Text("anonymous")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.5))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.white.opacity(0.08))
+                        // Horizontal header: avatar left, info right
+                        HStack(spacing: 16) {
+                            // Avatar
+                            Circle()
+                                .fill(Color.vibePurple.opacity(0.2))
+                                .frame(width: 72, height: 72)
+                                .overlay(
+                                    Text(String(user.username.prefix(1)).uppercased())
+                                        .font(.system(size: 28, weight: .bold))
+                                        .foregroundColor(.vibePurple)
                                 )
-                        }
+                                .shadow(color: .vibePurple.opacity(0.4), radius: 12)
 
-                        // Stats row
-                        HStack(spacing: 32) {
-                            statItem(count: user.followingCount, label: "Following")
-                            statItem(count: user.followerCount, label: "Followers")
-                            statItem(count: user.videoCount, label: "Videos")
-                        }
-                        .padding(.top, 8)
+                            VStack(alignment: .leading, spacing: 6) {
+                                // Username
+                                Text("@\(user.username)")
+                                    .font(.title3.bold())
+                                    .foregroundColor(.white)
 
-                        // Bio placeholder
+                                // Anonymous badge
+                                if user.isAnonymous {
+                                    Text("anonymous")
+                                        .font(.caption)
+                                        .foregroundColor(.white.opacity(0.5))
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 3)
+                                        .background(
+                                            Capsule()
+                                                .fill(Color.white.opacity(0.08))
+                                        )
+                                }
+
+                                // Stats row
+                                HStack(spacing: 20) {
+                                    statItem(count: user.followingCount, label: "Following")
+                                    statItem(count: user.followerCount, label: "Followers")
+                                    statItem(count: user.videoCount, label: "Videos")
+                                }
+                                .padding(.top, 2)
+                            }
+
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+
+                        // Bio
                         if let bio = user.bio, !bio.isEmpty {
                             Text(bio)
                                 .font(.subheadline)
                                 .foregroundColor(.white.opacity(0.7))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 32)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 16)
                         }
 
                         Divider()
                             .background(Color.white.opacity(0.1))
-                            .padding(.horizontal, 24)
+                            .padding(.horizontal, 16)
 
                         // Video grid or empty state
                         if userVideos.isEmpty && !isLoadingVideos {
@@ -93,8 +117,6 @@ struct ProfileView: View {
                             }
                             .padding(.horizontal, 2)
                         }
-
-                        Spacer().frame(height: 100) // tab bar clearance
                     }
                 }
                 .onAppear {
@@ -121,17 +143,17 @@ struct ProfileView: View {
     }
 
     private func statItem(count: Int, label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 2) {
             Text("\(count)")
-                .font(.headline.bold())
+                .font(.subheadline.bold())
                 .foregroundColor(.white)
             Text(label)
-                .font(.caption)
+                .font(.system(size: 10))
                 .foregroundColor(.white.opacity(0.5))
         }
     }
 }
 
 #Preview {
-    ProfileView()
+    ProfileView(selectedTab: .constant(.profile))
 }

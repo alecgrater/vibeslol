@@ -4,8 +4,10 @@ import AVFoundation
 struct FeedView: View {
     @StateObject private var viewModel = FeedViewModel()
     @StateObject private var preloader = VideoPreloader()
+    @ObservedObject private var auth = AuthManager.shared
     @State private var currentIndex: Int = 0
     @State private var navigationPath = NavigationPath()
+    @Binding var selectedTab: ContentView.Tab
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -61,9 +63,9 @@ struct FeedView: View {
                         .ignoresSafeArea()
                     }
 
-                    // Feed mode tabs at top
+                    // Top nav bar
                     VStack {
-                        feedModeTabs
+                        topNavBar
                         Spacer()
                     }
                 }
@@ -86,44 +88,100 @@ struct FeedView: View {
         }
     }
 
-    private var feedModeTabs: some View {
-        HStack(spacing: 24) {
+    // MARK: - Top Navigation Bar
+
+    private var topNavBar: some View {
+        HStack {
+            // Left: profile avatar
             Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    viewModel.switchFeedMode(.forYou)
-                    currentIndex = 0
-                }
+                selectedTab = .profile
+                HapticsService.shared.lightTap()
             } label: {
-                VStack(spacing: 4) {
-                    Text("For You")
-                        .font(.subheadline.bold())
-                        .foregroundColor(viewModel.feedMode == .forYou ? .white : .white.opacity(0.5))
-                    Rectangle()
-                        .fill(viewModel.feedMode == .forYou ? Color.vibePurple : Color.clear)
-                        .frame(width: 30, height: 2)
-                        .cornerRadius(1)
-                }
+                Circle()
+                    .fill(Color.vibePurple.opacity(0.25))
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Text(avatarInitial)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.vibePurple)
+                    )
+                    .shadow(color: .vibePurple.opacity(0.3), radius: 4)
             }
 
-            Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    viewModel.switchFeedMode(.following)
-                    currentIndex = 0
+            Spacer()
+
+            // Center: feed mode pill selector
+            feedModePill
+
+            Spacer()
+
+            // Right: camera + notifications
+            HStack(spacing: 16) {
+                Button {
+                    selectedTab = .record
+                    HapticsService.shared.mediumTap()
+                } label: {
+                    Image(systemName: "camera.fill")
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.9))
+                        .shadow(color: .vibePurple.opacity(0.3), radius: 4)
                 }
-            } label: {
-                VStack(spacing: 4) {
-                    Text("Following")
-                        .font(.subheadline.bold())
-                        .foregroundColor(viewModel.feedMode == .following ? .white : .white.opacity(0.5))
-                    Rectangle()
-                        .fill(viewModel.feedMode == .following ? Color.vibePurple : Color.clear)
-                        .frame(width: 30, height: 2)
-                        .cornerRadius(1)
+
+                Button {
+                    selectedTab = .notifications
+                    HapticsService.shared.lightTap()
+                } label: {
+                    Image(systemName: "bell")
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.9))
+                        .shadow(color: .vibePurple.opacity(0.3), radius: 4)
                 }
             }
         }
-        .padding(.top, 60)
-        .shadow(color: .black.opacity(0.6), radius: 4)
+        .padding(.horizontal, 16)
+        .padding(.top, 58)
+        .padding(.bottom, 8)
+    }
+
+    private var avatarInitial: String {
+        if let user = auth.currentUser {
+            return String(user.username.prefix(1)).uppercased()
+        }
+        return "?"
+    }
+
+    // MARK: - Feed Mode Pill
+
+    private var feedModePill: some View {
+        HStack(spacing: 0) {
+            feedModeButton(title: "For You", mode: .forYou)
+            feedModeButton(title: "Following", mode: .following)
+        }
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .environment(\.colorScheme, .dark)
+        )
+    }
+
+    private func feedModeButton(title: String, mode: FeedMode) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                viewModel.switchFeedMode(mode)
+                currentIndex = 0
+            }
+        } label: {
+            Text(title)
+                .font(.caption.bold())
+                .foregroundColor(viewModel.feedMode == mode ? .white : .white.opacity(0.45))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    viewModel.feedMode == mode
+                        ? Capsule().fill(Color.vibePurple.opacity(0.6))
+                        : nil
+                )
+        }
     }
 
     private var emptyFollowingState: some View {
@@ -227,15 +285,15 @@ struct VideoCell: View {
                     .transition(.opacity)
             }
 
-            // Bottom gradient for readability
+            // Top gradient for caption readability (replaces bottom gradient)
             VStack {
-                Spacer()
                 LinearGradient(
-                    colors: [.clear, .black.opacity(0.7)],
-                    startPoint: .center,
-                    endPoint: .bottom
+                    colors: [.black.opacity(0.7), .clear],
+                    startPoint: .top,
+                    endPoint: .center
                 )
                 .frame(height: 250)
+                Spacer()
             }
             .ignoresSafeArea()
 
@@ -284,122 +342,125 @@ struct VideoCell: View {
     }
 
     private var overlayContent: some View {
-        HStack(alignment: .bottom) {
-            // Left: creator info
-            VStack(alignment: .leading, spacing: 6) {
-                Spacer()
-
-                // Tappable username → navigate to profile
-                Button {
-                    if let authorId = video.authorId {
-                        navigationPath.append(authorId)
+        ZStack {
+            // Top area: username + caption (below nav bar)
+            VStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    // Tappable username → navigate to profile
+                    Button {
+                        if let authorId = video.authorId {
+                            navigationPath.append(authorId)
+                        }
+                    } label: {
+                        Text("@\(video.username)")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.6), radius: 3)
                     }
-                } label: {
-                    Text("@\(video.username)")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.6), radius: 3)
+                    .disabled(video.authorId == nil)
+
+                    if let caption = video.caption {
+                        Text(caption)
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.85))
+                            .lineLimit(2)
+                            .shadow(color: .black.opacity(0.6), radius: 3)
+                    }
+
+                    // Loop counter
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.trianglehead.2.counterclockwise.rotate.90")
+                            .font(.caption2)
+                        Text("\(playerManager.loopCount)")
+                            .font(.caption2)
+                    }
+                    .foregroundColor(.white.opacity(0.4))
                 }
-                .disabled(video.authorId == nil)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 16)
+                .padding(.trailing, 80)
+                .padding(.top, 110) // below the top nav bar
 
-                if let caption = video.caption {
-                    Text(caption)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.85))
-                        .lineLimit(2)
-                        .shadow(color: .black.opacity(0.6), radius: 3)
-                }
-
-                // Loop counter
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.trianglehead.2.counterclockwise.rotate.90")
-                        .font(.caption2)
-                    Text("\(playerManager.loopCount)")
-                        .font(.caption2)
-                }
-                .foregroundColor(.white.opacity(0.4))
-            }
-            .padding(.leading, 16)
-            .padding(.bottom, 100)
-
-            Spacer()
-
-            // Right: action buttons
-            VStack(spacing: 24) {
                 Spacer()
+            }
 
-                ActionButton(
+            // Bottom center: action pill
+            VStack {
+                Spacer()
+                actionPill
+                    .padding(.bottom, 50)
+            }
+        }
+    }
+
+    // MARK: - Bottom Action Pill
+
+    private var actionPill: some View {
+        HStack(spacing: 28) {
+            // Like
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    viewModel.likeVideo(videoId: video.id)
+                    HapticsService.shared.likeHaptic()
+                    likeScale = 1.3
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                        likeScale = 1.0
+                    }
+                }
+            } label: {
+                pillAction(
                     icon: isLiked ? "heart.fill" : "heart",
                     count: video.likeCount,
                     color: isLiked ? .red : .white
-                ) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        viewModel.likeVideo(videoId: video.id)
-                        HapticsService.shared.likeHaptic()
-                        likeScale = 1.3
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
-                            likeScale = 1.0
-                        }
-                    }
-                }
-                .scaleEffect(likeScale)
-
-                ActionButton(icon: "bubble.right", count: video.commentCount) {
-                    showComments = true
-                }
-
-                ActionButton(icon: "arrowshape.turn.up.right", count: video.shareCount) {
-                    showShareSheet = true
-                }
-
-                // Report button
-                Button {
-                    showReportSheet = true
-                } label: {
-                    Image(systemName: "flag")
-                        .font(.body)
-                        .foregroundColor(.white.opacity(0.5))
-                        .shadow(color: .vibePurple.opacity(0.2), radius: 4)
-                }
+                )
             }
-            .padding(.trailing, 12)
-            .padding(.bottom, 100)
-        }
-    }
+            .scaleEffect(likeScale)
 
-    private func resetOverlayTimer() {
-        overlayTimer?.invalidate()
-        overlayTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
-            withAnimation(.easeOut(duration: 0.3)) {
-                showOverlay = false
+            // Comment
+            Button {
+                showComments = true
+            } label: {
+                pillAction(icon: "bubble.right", count: video.commentCount)
+            }
+
+            // Share
+            Button {
+                showShareSheet = true
+            } label: {
+                pillAction(icon: "arrowshape.turn.up.right", count: video.shareCount)
+            }
+
+            // Report
+            Button {
+                showReportSheet = true
+            } label: {
+                Image(systemName: "flag")
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.5))
             }
         }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 12)
+        .background(
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .environment(\.colorScheme, .dark)
+        )
+        .shadow(color: .vibePurple.opacity(0.15), radius: 8)
     }
-}
 
-// MARK: - Action Button
-
-struct ActionButton: View {
-    let icon: String
-    let count: Int
-    var color: Color = .white
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(color)
-                    .shadow(color: .vibePurple.opacity(0.3), radius: 4)
-
-                Text(formatCount(count))
-                    .font(.caption2)
-                    .foregroundColor(.white.opacity(0.7))
-            }
+    private func pillAction(icon: String, count: Int, color: Color = .white) -> some View {
+        VStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(color)
+                .shadow(color: .vibePurple.opacity(0.3), radius: 4)
+            Text(formatCount(count))
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.7))
         }
     }
 
@@ -410,6 +471,15 @@ struct ActionButton: View {
             return String(format: "%.1fK", Double(count) / 1_000)
         }
         return "\(count)"
+    }
+
+    private func resetOverlayTimer() {
+        overlayTimer?.invalidate()
+        overlayTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+            withAnimation(.easeOut(duration: 0.3)) {
+                showOverlay = false
+            }
+        }
     }
 }
 
@@ -438,5 +508,5 @@ struct ShareSheetView: UIViewControllerRepresentable {
 }
 
 #Preview {
-    FeedView()
+    FeedView(selectedTab: .constant(.feed))
 }

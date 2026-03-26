@@ -8,12 +8,12 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Main content
+        ZStack {
+            // Main content — no bottom tab bar, navigation lives in FeedView top bar
             Group {
                 switch selectedTab {
                 case .feed:
-                    FeedView()
+                    FeedView(selectedTab: $selectedTab)
                 case .discover:
                     PlaceholderView(title: "Discover")
                 case .record:
@@ -21,13 +21,10 @@ struct ContentView: View {
                 case .notifications:
                     PlaceholderView(title: "Notifications")
                 case .profile:
-                    ProfileView()
+                    ProfileView(selectedTab: $selectedTab)
                 }
             }
             .ignoresSafeArea()
-
-            // Tab bar
-            TabBarView(selectedTab: $selectedTab)
         }
         .background(Color.black)
     }
