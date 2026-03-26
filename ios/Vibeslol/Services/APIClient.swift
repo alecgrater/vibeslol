@@ -13,7 +13,7 @@ final class APIClient {
         #if DEBUG
         self.baseURL = "http://localhost:8000"
         #else
-        self.baseURL = "https://api.vibeslol.com"
+        self.baseURL = "https://vibeslol-production.up.railway.app"
         #endif
         self.decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
