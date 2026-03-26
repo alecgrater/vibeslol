@@ -6,6 +6,7 @@ class FeedViewModel: ObservableObject {
     @Published var videos: [Video] = []
     @Published var isLoading = false
     @Published var currentIndex = 0
+    @Published var likedVideoIds: Set<String> = []
 
     private var currentPage = 0
 
@@ -49,22 +50,40 @@ class FeedViewModel: ObservableObject {
     }
 
     func likeVideo(videoId: String) {
-        // Optimistic update
+        let wasLiked = likedVideoIds.contains(videoId)
+
+        // Optimistic toggle
+        if wasLiked {
+            likedVideoIds.remove(videoId)
+        } else {
+            likedVideoIds.insert(videoId)
+        }
+
+        // Optimistic count update
         if let index = videos.firstIndex(where: { $0.id == videoId }) {
             let v = videos[index]
+            let newCount = wasLiked ? max(0, v.likeCount - 1) : v.likeCount + 1
             videos[index] = Video(
                 id: v.id, username: v.username, caption: v.caption,
                 videoURL: v.videoURL, thumbnailURL: v.thumbnailURL,
-                likeCount: v.likeCount + 1, commentCount: v.commentCount,
+                likeCount: newCount, commentCount: v.commentCount,
                 shareCount: v.shareCount, loopCount: v.loopCount,
                 createdAt: v.createdAt
             )
         }
-        // Sync with API using stored userId
+
+        // Sync with API
         guard let userId = AuthManager.shared.userId else { return }
         Task {
             do {
                 let result = try await APIClient.shared.likeVideo(id: videoId, userId: userId)
+                // Sync liked state with server
+                if result.liked {
+                    likedVideoIds.insert(videoId)
+                } else {
+                    likedVideoIds.remove(videoId)
+                }
+                // Update count from server
                 if let index = videos.firstIndex(where: { $0.id == videoId }) {
                     let v = videos[index]
                     videos[index] = Video(
@@ -76,8 +95,27 @@ class FeedViewModel: ObservableObject {
                     )
                 }
             } catch {
+                // Revert optimistic update on failure
+                if wasLiked {
+                    likedVideoIds.insert(videoId)
+                } else {
+                    likedVideoIds.remove(videoId)
+                }
                 print("[feed] Like API error: \(error.localizedDescription)")
             }
+        }
+    }
+
+    func updateCommentCount(videoId: String, count: Int) {
+        if let index = videos.firstIndex(where: { $0.id == videoId }) {
+            let v = videos[index]
+            videos[index] = Video(
+                id: v.id, username: v.username, caption: v.caption,
+                videoURL: v.videoURL, thumbnailURL: v.thumbnailURL,
+                likeCount: v.likeCount, commentCount: count,
+                shareCount: v.shareCount, loopCount: v.loopCount,
+                createdAt: v.createdAt
+            )
         }
     }
 }

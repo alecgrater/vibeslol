@@ -27,3 +27,4 @@ class Video(Base):
 
     author: Mapped["User"] = relationship("User", back_populates="videos")  # noqa: F821
     likes: Mapped[List["Like"]] = relationship("Like", back_populates="video")  # noqa: F821
+    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="video")  # noqa: F821

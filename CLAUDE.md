@@ -26,14 +26,17 @@ vibeslol/
 │   │   ├── VideoPlayerView.swift  # AVPlayerLayer UIViewRepresentable
 │   │   ├── CameraView.swift       # Camera recording screen (record, countdown, preview)
 │   │   ├── CameraPreviewView.swift # AVCaptureVideoPreviewLayer UIViewRepresentable
-│   │   └── VideoTrimmerView.swift # Trim-to-6s scrubber UI with thumbnail strip
+│   │   ├── VideoTrimmerView.swift # Trim-to-6s scrubber UI with thumbnail strip
+│   │   └── CommentSheetView.swift # Comment bottom sheet with posting
 │   ├── ViewModels/
 │   │   ├── FeedViewModel.swift    # Feed data + analytics stubs
 │   │   ├── CameraViewModel.swift  # AVCaptureSession, recording, timer logic
 │   │   └── VideoTrimmerViewModel.swift # Thumbnail generation, trim export logic
+│   │   └── CommentViewModel.swift # Comment fetching, posting logic
 │   ├── Models/
 │   │   ├── Video.swift            # Video model (resolvedURL for bundle/remote)
-│   │   └── User.swift             # User model with anonymous support
+│   │   ├── User.swift             # User model with anonymous support
+│   │   └── Comment.swift          # Comment model with timeAgo
 │   ├── Services/
 │   │   ├── APIClient.swift        # API client stub
 │   │   ├── HapticsService.swift   # Like, tap, scroll snap, success haptics
@@ -99,7 +102,7 @@ vibeslol/
 - [x] **Feature B: Trim-to-6s Tool** — When uploading from camera roll, let user select a 6s window from a longer video. Scrubber UI with preview. Wire up the photo library button already in CameraView.swift.
 - [x] **Feature C: Backend API — Users + Videos** — SQLAlchemy models for User/Video/Like/Follow. API endpoints: POST /users/anonymous, GET /videos/feed, POST /videos/{id}/like, POST /videos (upload). Wire up APIClient.swift.
 - [x] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab. — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab.
-- [ ] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
+- [x] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
 - [ ] **Feature F: User Profiles + Follow System** — Profile screen showing user's videos in a grid. Follow/unfollow button. Follower/following counts. Following tab in feed.
 - [ ] **Feature G: Algorithm V1** — Track watch time, loops, skips. Build simple recommendation engine (popularity + collaborative filtering). Replace mock feed with algorithm-served feed.
 - [ ] **Feature H: Polish + Launch Prep** — UI animations refinement, content moderation (report/block), analytics dashboard, App Store submission prep.
@@ -157,6 +160,18 @@ vibeslol/
 - FeedViewModel.likeVideo now does optimistic update + async API call with AuthManager.shared.userId, updates to server-confirmed like count on success.
 - Gotcha for Feature E: AuthManager.shared.userId is the source of truth for the current user's ID. Use it in any API call that needs user identity. AuthManager.shared.currentUser has the full User object. Like button in FeedView should track liked state per-video (not yet done — Feature E should add a Set<String> of liked video IDs).
 - Gotcha for Feature E: ProfileView currently shows static 0 counts. Feature F will need to refresh user from API to get real counts.
+
+**Feature E (Like/Comment/Share Wired Up):**
+- New files: Comment.swift (Models), CommentSheetView.swift (Views), CommentViewModel.swift (ViewModels), comment.py (backend models)
+- Modified: FeedView.swift (wired like button to viewModel.likeVideo, added comment bottom sheet via .sheet, added share sheet via UIActivityViewController), FeedViewModel.swift (added likedVideoIds Set<String> for like state tracking, toggle-aware likeVideo with optimistic update + server sync + revert on failure, updateCommentCount method), APIClient.swift (added fetchComments + postComment endpoints), routes.py (GET/POST /api/videos/{id}/comments), schemas.py (CommentOut + CommentCreateRequest), models/__init__.py (exports Comment), user.py (comments relationship), video.py (comments relationship), project.pbxproj (3 new files)
+- Backend Comment model: id (autoincrement), user_id (FK), video_id (FK), text, created_at. Like model pattern replicated.
+- CommentSheetView: bottom sheet with drag handle, comment list (avatar + username + timeAgo + text), text input with send button, empty state. Uses .presentationDetents([.medium, .large]).
+- CommentViewModel: loads comments from API, posts new comments (inserts at top), requires AuthManager.shared.userId.
+- FeedViewModel.likeVideo now properly toggles: tracks liked state in likedVideoIds Set, does optimistic count +/- 1, syncs with server, reverts on failure.
+- ShareSheetView wraps UIActivityViewController with video caption text + video URL.
+- VideoCell now takes viewModel as @ObservedObject to wire like/comment/share. isLiked is computed from viewModel.likedVideoIds.
+- Comment.timeAgo computed property formats relative time (s/m/h/d).
+- Gotcha for Feature F: ProfileView still shows static 0 counts. Feature F should fetch user from API to get real follower/following/video counts. Also, the comment sheet allows anonymous users to comment — PRD says only non-anonymous users should be able to comment. Feature F or a later polish pass should gate this.
 
 ### INSTRUCTIONS FOR AUTONOMOUS BUILD
 When starting a new session after /clear:

@@ -91,6 +91,29 @@ final class APIClient {
         return try decoder.decode(LikeResponse.self, from: data)
     }
 
+    // MARK: - Comments
+
+    func fetchComments(videoId: String) async throws -> [Comment] {
+        let url = URL(string: "\(baseURL)/api/videos/\(videoId)/comments")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+        try checkResponse(response)
+        return try decoder.decode([Comment].self, from: data)
+    }
+
+    func postComment(videoId: String, userId: String, text: String) async throws -> Comment {
+        let url = URL(string: "\(baseURL)/api/videos/\(videoId)/comments")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: String] = ["user_id": userId, "text": text]
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try checkResponse(response)
+        return try decoder.decode(Comment.self, from: data)
+    }
+
     // MARK: - Helpers
 
     private func checkResponse(_ response: URLResponse) throws {

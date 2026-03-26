@@ -50,6 +50,23 @@ class VideoUploadOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# --- Comment ---
+
+class CommentOut(BaseModel):
+    id: int
+    user_id: str
+    username: str
+    text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CommentCreateRequest(BaseModel):
+    user_id: str
+    text: str
+
+
 # --- Like ---
 
 class LikeOut(BaseModel):

@@ -35,6 +35,9 @@
 		AA000026 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000026; };
 		AA000027 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000027; };
 		AA000028 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000028; };
+		AA000029 /* Comment.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000029; };
+		AA000030 /* CommentSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000030; };
+		AA000031 /* CommentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000031; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +69,9 @@
 		AB000026 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AB000027 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		AB000028 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		AB000029 /* Comment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comment.swift; sourceTree = "<group>"; };
+		AB000030 /* CommentSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentSheetView.swift; sourceTree = "<group>"; };
+		AB000031 /* CommentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentViewModel.swift; sourceTree = "<group>"; };
 		AC000001 /* Vibeslol.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vibeslol.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -123,6 +129,7 @@
 				AB000023 /* CameraPreviewView.swift */,
 				AB000024 /* VideoTrimmerView.swift */,
 				AB000028 /* ProfileView.swift */,
+				AB000030 /* CommentSheetView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -133,6 +140,7 @@
 				AB000007 /* FeedViewModel.swift */,
 				AB000022 /* CameraViewModel.swift */,
 				AB000025 /* VideoTrimmerViewModel.swift */,
+				AB000031 /* CommentViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -142,6 +150,7 @@
 			children = (
 				AB000005 /* Video.swift */,
 				AB000006 /* User.swift */,
+				AB000029 /* Comment.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -291,6 +300,9 @@
 				AA000026 /* KeychainService.swift in Sources */,
 				AA000027 /* AuthManager.swift in Sources */,
 				AA000028 /* ProfileView.swift in Sources */,
+				AA000029 /* Comment.swift in Sources */,
+				AA000030 /* CommentSheetView.swift in Sources */,
+				AA000031 /* CommentViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

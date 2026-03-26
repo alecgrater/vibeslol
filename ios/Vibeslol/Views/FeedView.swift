@@ -27,7 +27,8 @@ struct FeedView: View {
                                     video: video,
                                     playerManager: preloader.playerManager(for: video),
                                     isActive: index == currentIndex,
-                                    screenSize: geometry.size
+                                    screenSize: geometry.size,
+                                    viewModel: viewModel
                                 )
                                 .frame(width: geometry.size.width, height: geometry.size.height)
                                 .id(index)
@@ -73,10 +74,16 @@ struct VideoCell: View {
     @ObservedObject var playerManager: VideoPlayerManager
     let isActive: Bool
     let screenSize: CGSize
+    @ObservedObject var viewModel: FeedViewModel
 
-    @State private var isLiked = false
     @State private var showOverlay = true
     @State private var overlayTimer: Timer?
+    @State private var showComments = false
+    @State private var showShareSheet = false
+
+    private var isLiked: Bool {
+        viewModel.likedVideoIds.contains(video.id)
+    }
 
     var body: some View {
         ZStack {
@@ -134,6 +141,18 @@ struct VideoCell: View {
                 playerManager.pause()
             }
         }
+        .sheet(isPresented: $showComments) {
+            CommentSheetView(videoId: video.id) { newCount in
+                viewModel.updateCommentCount(videoId: video.id, count: newCount)
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.hidden)
+            .presentationBackground(.clear)
+        }
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheetView(video: video)
+                .presentationDetents([.medium])
+        }
     }
 
     private var overlayContent: some View {
@@ -176,21 +195,21 @@ struct VideoCell: View {
 
                 ActionButton(
                     icon: isLiked ? "heart.fill" : "heart",
-                    count: video.likeCount + (isLiked ? 1 : 0),
+                    count: video.likeCount,
                     color: isLiked ? .red : .white
                 ) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        isLiked.toggle()
+                        viewModel.likeVideo(videoId: video.id)
                         HapticsService.shared.likeHaptic()
                     }
                 }
 
                 ActionButton(icon: "bubble.right", count: video.commentCount) {
-                    // TODO: Open comments
+                    showComments = true
                 }
 
                 ActionButton(icon: "arrowshape.turn.up.right", count: video.shareCount) {
-                    // TODO: Share sheet
+                    showShareSheet = true
                 }
             }
             .padding(.trailing, 12)
@@ -239,6 +258,30 @@ struct ActionButton: View {
         }
         return "\(count)"
     }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheetView: UIViewControllerRepresentable {
+    let video: Video
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        var items: [Any] = []
+
+        // Share the video caption or a default text
+        let shareText = "Check out this vibe on Vibeslol! \(video.caption ?? "")"
+        items.append(shareText)
+
+        // If we have a URL, share it
+        if let url = video.resolvedURL {
+            items.append(url)
+        }
+
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

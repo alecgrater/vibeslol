@@ -10,11 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import VIDEO_DURATION_SECONDS
 from app.core.database import get_db
+from app.models.comment import Comment
 from app.models.follow import Follow
 from app.models.like import Like
 from app.models.user import User
 from app.models.video import Video
 from app.schemas import (
+    CommentCreateRequest,
+    CommentOut,
     CreateAnonymousUserRequest,
     LikeOut,
     UserOut,
@@ -168,6 +171,65 @@ async def toggle_like(
         video.like_count += 1
         await db.commit()
         return LikeOut(liked=True, like_count=video.like_count)
+
+
+# ---------- Comments ----------
+
+@router.get("/videos/{video_id}/comments", response_model=List[CommentOut])
+async def get_comments(
+    video_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    video = await db.get(Video, video_id)
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    result = await db.execute(
+        select(Comment)
+        .where(Comment.video_id == video_id)
+        .order_by(Comment.created_at.desc())
+    )
+    comments = result.scalars().all()
+    out = []
+    for c in comments:
+        user = await db.get(User, c.user_id)
+        out.append(CommentOut(
+            id=c.id,
+            user_id=c.user_id,
+            username=user.username if user else "unknown",
+            text=c.text,
+            created_at=c.created_at,
+        ))
+    return out
+
+
+@router.post("/videos/{video_id}/comments", response_model=CommentOut, status_code=201)
+async def create_comment(
+    video_id: str,
+    body: CommentCreateRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    video = await db.get(Video, video_id)
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    user = await db.get(User, body.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    comment = Comment(user_id=body.user_id, video_id=video_id, text=body.text)
+    db.add(comment)
+    video.comment_count += 1
+    await db.commit()
+    await db.refresh(comment)
+
+    return CommentOut(
+        id=comment.id,
+        user_id=comment.user_id,
+        username=user.username,
+        text=comment.text,
+        created_at=comment.created_at,
+    )
 
 
 def _video_out(video: Video, username: str) -> VideoOut:
