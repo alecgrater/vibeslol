@@ -1,7 +1,7 @@
 import random
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,27 +28,31 @@ class TokenResponse(BaseModel):
     username: str
 
 
-class AnonymousAuthRequest(BaseModel):
-    device_token: str | None = None
-
-
 class RefreshRequest(BaseModel):
     refresh_token: str
 
 
 @router.post("/anonymous", response_model=TokenResponse)
 async def create_anonymous_account(
-    body: AnonymousAuthRequest = AnonymousAuthRequest(),
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """Create an anonymous account and return JWT tokens."""
+    device_token = None
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            device_token = body.get("device_token")
+    except Exception:
+        pass
+
     uid = str(uuid.uuid4())
     username = f"vibe_{random.randint(1000, 9999)}"
     user = User(
         id=uid,
         username=username,
         is_anonymous=True,
-        device_token=body.device_token,
+        device_token=device_token,
     )
     db.add(user)
     await db.commit()
