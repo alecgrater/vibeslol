@@ -17,7 +17,7 @@ struct ContentView: View {
                 case .discover:
                     PlaceholderView(title: "Discover")
                 case .record:
-                    PlaceholderView(title: "Record")
+                    CameraView()
                 case .notifications:
                     PlaceholderView(title: "Notifications")
                 case .profile:
