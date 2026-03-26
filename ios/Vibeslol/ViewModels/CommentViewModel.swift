@@ -26,13 +26,13 @@ class CommentViewModel: ObservableObject {
     }
 
     func postComment(text: String) {
-        guard let userId = AuthManager.shared.userId else { return }
+        guard AuthManager.shared.userId != nil else { return }
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         isSending = true
         Task {
             do {
                 let comment = try await APIClient.shared.postComment(
-                    videoId: videoId, userId: userId, text: text
+                    videoId: videoId, text: text
                 )
                 comments.insert(comment, at: 0)
             } catch {

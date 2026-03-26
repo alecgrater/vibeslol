@@ -36,7 +36,7 @@ class UserProfileViewModel: ObservableObject {
             // Check follow status
             if let myId = AuthManager.shared.userId, myId != userId {
                 do {
-                    isFollowing = try await APIClient.shared.checkIsFollowing(userId: userId, followerId: myId)
+                    isFollowing = try await APIClient.shared.checkIsFollowing(userId: userId)
                 } catch {
                     print("[profile] Failed to check follow status: \(error.localizedDescription)")
                 }
@@ -67,7 +67,7 @@ class UserProfileViewModel: ObservableObject {
 
         Task {
             do {
-                let result = try await APIClient.shared.toggleFollow(userId: userId, followerId: myId)
+                let result = try await APIClient.shared.toggleFollow(userId: userId)
                 isFollowing = result.following
                 if var u = user {
                     user = User(
@@ -92,7 +92,7 @@ class UserProfileViewModel: ObservableObject {
 
         Task {
             do {
-                let result = try await APIClient.shared.toggleBlock(userId: userId, blockerId: myId)
+                let result = try await APIClient.shared.toggleBlock(userId: userId)
                 isBlocked = result.blocked
                 if result.blocked {
                     isFollowing = false

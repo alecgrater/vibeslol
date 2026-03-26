@@ -13,6 +13,8 @@ final class KeychainService {
         case userId = "vibeslol_user_id"
         case deviceToken = "vibeslol_device_token"
         case username = "vibeslol_username"
+        case accessToken = "vibeslol_access_token"
+        case refreshToken = "vibeslol_refresh_token"
     }
 
     // MARK: - Public API
@@ -32,6 +34,16 @@ final class KeychainService {
         set { save(key: .username, value: newValue) }
     }
 
+    var accessToken: String? {
+        get { read(key: .accessToken) }
+        set { save(key: .accessToken, value: newValue) }
+    }
+
+    var refreshToken: String? {
+        get { read(key: .refreshToken) }
+        set { save(key: .refreshToken, value: newValue) }
+    }
+
     var isLoggedIn: Bool {
         userId != nil
     }
@@ -40,6 +52,8 @@ final class KeychainService {
         userId = nil
         deviceToken = nil
         username = nil
+        accessToken = nil
+        refreshToken = nil
     }
 
     // MARK: - Keychain Operations

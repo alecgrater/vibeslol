@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -9,9 +8,9 @@ from pydantic import BaseModel
 class UserOut(BaseModel):
     id: str
     username: str
-    display_name: Optional[str] = None
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
+    display_name: str | None = None
+    avatar_url: str | None = None
+    bio: str | None = None
     follower_count: int = 0
     following_count: int = 0
     video_count: int = 0
@@ -22,7 +21,7 @@ class UserOut(BaseModel):
 
 
 class CreateAnonymousUserRequest(BaseModel):
-    device_token: Optional[str] = None
+    device_token: str | None = None
 
 
 # --- Video ---
@@ -31,9 +30,9 @@ class VideoOut(BaseModel):
     id: str
     author_id: str
     username: str
-    caption: Optional[str] = None
+    caption: str | None = None
     video_url: str
-    thumbnail_url: Optional[str] = None
+    thumbnail_url: str | None = None
     like_count: int = 0
     comment_count: int = 0
     share_count: int = 0
@@ -64,7 +63,6 @@ class CommentOut(BaseModel):
 
 
 class CommentCreateRequest(BaseModel):
-    user_id: str
     text: str
 
 
@@ -85,7 +83,6 @@ class FollowOut(BaseModel):
 # --- Analytics ---
 
 class WatchEventRequest(BaseModel):
-    user_id: str
     video_id: str
     watch_duration_ms: int
     loop_count: int = 0
@@ -100,9 +97,8 @@ class WatchEventOut(BaseModel):
 # --- Report ---
 
 class ReportCreateRequest(BaseModel):
-    reporter_id: str
     reason: str
-    details: Optional[str] = None
+    details: str | None = None
 
 
 class ReportOut(BaseModel):
@@ -114,10 +110,6 @@ class ReportOut(BaseModel):
 
 
 # --- Block ---
-
-class BlockToggleRequest(BaseModel):
-    blocker_id: str
-
 
 class BlockOut(BaseModel):
     blocked: bool
@@ -138,7 +130,7 @@ class TrendingVideoOut(BaseModel):
     id: str
     author_id: str
     username: str
-    caption: Optional[str] = None
+    caption: str | None = None
     like_count: int
     comment_count: int
     loop_count: int

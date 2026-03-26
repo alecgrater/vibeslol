@@ -122,11 +122,10 @@ struct ReportSheetView: View {
     }
 
     private func submitReport(reason: String) {
-        guard let userId = AuthManager.shared.userId else { return }
         isSubmitting = true
         Task {
             do {
-                _ = try await APIClient.shared.reportVideo(videoId: videoId, reporterId: userId, reason: reason)
+                _ = try await APIClient.shared.reportVideo(videoId: videoId, reason: reason)
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     showConfirmation = true
                 }

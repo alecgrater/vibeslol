@@ -12,7 +12,6 @@ Scoring approach:
 import math
 import random
 from datetime import datetime, timezone
-from typing import List, Optional, Tuple
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -108,11 +107,11 @@ async def get_collaborative_scores(
 
 async def get_recommended_feed(
     db: AsyncSession,
-    user_id: Optional[str] = None,
+    user_id: str | None = None,
     page: int = 0,
     limit: int = 20,
-    blocked_author_ids: Optional[List[str]] = None,
-) -> List[Video]:
+    blocked_author_ids: list[str] | None = None,
+) -> list[Video]:
     """
     V1 recommendation engine.
 
@@ -140,8 +139,8 @@ async def get_recommended_feed(
         collab_scores = await get_collaborative_scores(db, user_id)
 
     # Score each video
-    scored: List[Tuple[float, Video]] = []
-    unseen: List[Video] = []
+    scored: list[tuple[float, Video]] = []
+    unseen: list[Video] = []
 
     for video in all_videos:
         # Skip videos user has already seen (for anti-repetition)
