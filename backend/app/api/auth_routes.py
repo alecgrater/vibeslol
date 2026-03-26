@@ -38,7 +38,7 @@ class RefreshRequest(BaseModel):
 
 @router.post("/anonymous", response_model=TokenResponse)
 async def create_anonymous_account(
-    body: AnonymousAuthRequest | None = None,
+    body: AnonymousAuthRequest = AnonymousAuthRequest(),
     db: AsyncSession = Depends(get_db),
 ):
     """Create an anonymous account and return JWT tokens."""
@@ -48,7 +48,7 @@ async def create_anonymous_account(
         id=uid,
         username=username,
         is_anonymous=True,
-        device_token=body.device_token if body else None,
+        device_token=body.device_token,
     )
     db.add(user)
     await db.commit()
