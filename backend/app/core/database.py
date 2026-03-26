@@ -43,6 +43,7 @@ engine = create_async_engine(
     db_url,
     echo=False,
     connect_args=connect_args,
+    pool_pre_ping=True,
     **pool_kwargs,
 )
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
