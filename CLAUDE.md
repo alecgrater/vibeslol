@@ -52,10 +52,10 @@ vibeslol/
 │   │   ├── core/config.py        # DB config, Cloudflare keys, app settings
 │   │   ├── core/database.py      # Async SQLAlchemy session
 │   │   ├── api/routes.py         # /api/users, /api/videos endpoints
-│   │   ├── models/               # User, Video, Like, Follow DB models
+│   │   ├── models/               # User, Video, Like, Follow, VideoView DB models
 │   │   ├── schemas.py            # Pydantic request/response schemas
 │   │   ├── services/             # Business logic (empty)
-│   │   └── recommendations/      # Algorithm (empty)
+│   │   └── recommendations/      # V1 recommendation engine
 │   └── pyproject.toml
 ├── scripts/generate_videos.py     # Python video generator (opencv)
 ├── PRD.md                         # Full product requirements
@@ -106,7 +106,7 @@ vibeslol/
 - [x] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab. — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab.
 - [x] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
 - [x] **Feature F: User Profiles + Follow System** — Profile screen showing user's videos in a grid. Follow/unfollow button. Follower/following counts. Following tab in feed.
-- [ ] **Feature G: Algorithm V1** — Track watch time, loops, skips. Build simple recommendation engine (popularity + collaborative filtering). Replace mock feed with algorithm-served feed.
+- [x] **Feature G: Algorithm V1** — Track watch time, loops, skips. Build simple recommendation engine (popularity + collaborative filtering). Replace mock feed with algorithm-served feed.
 - [ ] **Feature H: Polish + Launch Prep** — UI animations refinement, content moderation (report/block), analytics dashboard, App Store submission prep.
 
 ### COMPLETED FEATURE LOG
@@ -186,6 +186,19 @@ vibeslol/
 - VideoOut schema now includes author_id so iOS can navigate from feed → user profile.
 - Gotcha for Feature G: The following-feed endpoint is reverse-chronological like the main feed. Algorithm V1 should improve both feeds with recommendation logic. The FeedMode enum and switchFeedMode pattern in FeedViewModel make it easy to add algorithm-served feeds later.
 - Gotcha for Feature G: Comment sheet still allows anonymous users to comment — PRD says only non-anonymous users should be able to comment. Feature H polish pass should gate this.
+
+**Feature G (Algorithm V1):**
+- New files: models/video_view.py (VideoView model for watch event tracking), recommendations/engine.py (V1 recommendation engine)
+- Modified: models/__init__.py (exports VideoView), schemas.py (WatchEventRequest + WatchEventOut), api/routes.py (POST /api/analytics/watch endpoint, GET /api/videos/feed now uses algorithm + accepts user_id param)
+- Modified iOS: FeedViewModel.swift (onVideoAppear/onFeedDisappear/trackView for analytics, fetchFeed now passes userId for personalized recs), FeedView.swift (VideoCell.onChange tracks watch duration + loops on video switch, FeedView.onDisappear flushes analytics), APIClient.swift (trackWatchEvent endpoint, fetchFeed accepts userId param)
+- VideoView model tracks: user_id, video_id, watch_duration_ms, loop_count, skipped (bool), watch_percentage, created_at
+- Recommendation engine scoring: popularity (likes×1 + loops×2 + comments×1.5 + shares×3), collaborative filtering (users who liked same videos), recency boost (48h half-life exponential decay), anti-repetition (exclude watched videos)
+- Feed composition: 70% algorithm-ranked picks, 30% random discovery (min 2 discovery slots per page)
+- POST /api/analytics/watch also increments video.loop_count aggregate when loop_count > 0
+- iOS tracks watch events on video transition (onChange of isActive): sends videoId, loopCount, watchDuration. Skipped = watched < 3s.
+- Key decision: Kept following-feed as reverse-chronological (algorithm only powers For You tab). Following-feed is relationship-based, not ranked.
+- Key decision: Used candidate pool approach (fetch 5× limit, score all, take top) rather than SQL-level scoring for flexibility.
+- Gotcha for Feature H: Anonymous comment gating still needed. Also, the VideoView table should be indexed on (user_id, video_id) for production performance. The N+1 query issue in routes.py (fetching each author separately) persists — Feature H should add eager loading or a JOIN.
 
 ### INSTRUCTIONS FOR AUTONOMOUS BUILD
 When starting a new session after /clear:

@@ -38,8 +38,12 @@ final class APIClient {
 
     // MARK: - Videos
 
-    func fetchFeed(page: Int = 0, limit: Int = 20) async throws -> [Video] {
-        let url = URL(string: "\(baseURL)/api/videos/feed?page=\(page)&limit=\(limit)")!
+    func fetchFeed(page: Int = 0, limit: Int = 20, userId: String? = nil) async throws -> [Video] {
+        var urlString = "\(baseURL)/api/videos/feed?page=\(page)&limit=\(limit)"
+        if let userId = userId {
+            urlString += "&user_id=\(userId)"
+        }
+        let url = URL(string: urlString)!
         let (data, response) = try await URLSession.shared.data(from: url)
         try checkResponse(response)
         let videos = try decoder.decode([Video].self, from: data)
@@ -152,6 +156,35 @@ final class APIClient {
         let (data, response) = try await URLSession.shared.data(from: url)
         try checkResponse(response)
         return try decoder.decode([Video].self, from: data)
+    }
+
+    // MARK: - Analytics
+
+    func trackWatchEvent(
+        userId: String,
+        videoId: String,
+        watchDurationMs: Int,
+        loopCount: Int,
+        skipped: Bool,
+        watchPercentage: Double
+    ) async throws {
+        let url = URL(string: "\(baseURL)/api/analytics/watch")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "user_id": userId,
+            "video_id": videoId,
+            "watch_duration_ms": watchDurationMs,
+            "loop_count": loopCount,
+            "skipped": skipped,
+            "watch_percentage": watchPercentage
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+        try checkResponse(response)
     }
 
     // MARK: - Helpers

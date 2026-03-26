@@ -80,3 +80,18 @@ class LikeOut(BaseModel):
 class FollowOut(BaseModel):
     following: bool
     follower_count: int
+
+
+# --- Analytics ---
+
+class WatchEventRequest(BaseModel):
+    user_id: str
+    video_id: str
+    watch_duration_ms: int
+    loop_count: int = 0
+    skipped: bool = False
+    watch_percentage: float = 0.0
+
+
+class WatchEventOut(BaseModel):
+    status: str = "ok"

@@ -73,7 +73,11 @@ struct FeedView: View {
                 viewModel.loadVideos()
                 if !viewModel.videos.isEmpty {
                     preloader.updatePreload(videos: viewModel.videos, currentIndex: 0)
+                    viewModel.onVideoAppear(videoId: viewModel.videos[0].id)
                 }
+            }
+            .onDisappear {
+                viewModel.onFeedDisappear()
             }
             .navigationDestination(for: String.self) { userId in
                 UserProfileView(userId: userId)
@@ -212,7 +216,15 @@ struct VideoCell: View {
             if active {
                 playerManager.play()
                 resetOverlayTimer()
+                viewModel.onVideoAppear(videoId: video.id)
             } else {
+                // Track watch analytics before pausing
+                let loopCount = playerManager.loopCount
+                viewModel.trackView(
+                    videoId: video.id,
+                    loopCount: loopCount,
+                    watchDuration: Double(loopCount) * 6.0 + 3.0 // approximate
+                )
                 playerManager.pause()
             }
         }

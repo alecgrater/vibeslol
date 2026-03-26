@@ -16,17 +16,22 @@ class FeedViewModel: ObservableObject {
 
     private var currentPage = 0
 
+    // Analytics tracking state
+    private var videoStartTime: Date?
+    private var currentVideoId: String?
+
     func loadVideos() {
         isLoading = true
         currentPage = 0
         Task {
             do {
                 let fetched: [Video]
+                let userId = AuthManager.shared.userId
                 switch feedMode {
                 case .forYou:
-                    fetched = try await APIClient.shared.fetchFeed(page: 0)
+                    fetched = try await APIClient.shared.fetchFeed(page: 0, userId: userId)
                 case .following:
-                    guard let userId = AuthManager.shared.userId else {
+                    guard let userId = userId else {
                         videos = []
                         isLoading = false
                         return
@@ -49,11 +54,12 @@ class FeedViewModel: ObservableObject {
             do {
                 let nextPage = currentPage + 1
                 let more: [Video]
+                let userId = AuthManager.shared.userId
                 switch feedMode {
                 case .forYou:
-                    more = try await APIClient.shared.fetchFeed(page: nextPage)
+                    more = try await APIClient.shared.fetchFeed(page: nextPage, userId: userId)
                 case .following:
-                    guard let userId = AuthManager.shared.userId else {
+                    guard let userId = userId else {
                         isLoading = false
                         return
                     }
@@ -78,9 +84,60 @@ class FeedViewModel: ObservableObject {
         loadVideos()
     }
 
+    // MARK: - Analytics Tracking
+
+    /// Call when a video becomes the active (visible) video in the feed.
+    func onVideoAppear(videoId: String) {
+        // Send analytics for the previous video before switching
+        flushCurrentWatch()
+
+        currentVideoId = videoId
+        videoStartTime = Date()
+    }
+
+    /// Call when leaving the feed entirely.
+    func onFeedDisappear() {
+        flushCurrentWatch()
+    }
+
+    /// Send the watch event for the current video to the backend.
     func trackView(videoId: String, loopCount: Int, watchDuration: TimeInterval) {
-        // TODO: Send analytics to backend
-        print("[analytics] video=\(videoId) loops=\(loopCount) duration=\(watchDuration)s")
+        guard let userId = AuthManager.shared.userId else { return }
+
+        let watchMs = Int(watchDuration * 1000)
+        let skipped = watchDuration < 3.0  // watched less than half of 6s = skip
+        let watchPct = min(watchDuration / 6.0, Double(max(loopCount, 1)))
+
+        Task {
+            do {
+                try await APIClient.shared.trackWatchEvent(
+                    userId: userId,
+                    videoId: videoId,
+                    watchDurationMs: watchMs,
+                    loopCount: loopCount,
+                    skipped: skipped,
+                    watchPercentage: watchPct
+                )
+            } catch {
+                print("[analytics] Failed to track watch: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// Flush the current video watch session (called on video change or feed disappear).
+    private func flushCurrentWatch() {
+        guard let videoId = currentVideoId, let startTime = videoStartTime else { return }
+        let duration = Date().timeIntervalSince(startTime)
+
+        // We'll send the loop count as 0 here — the actual loop count will come
+        // from the VideoCell which has access to playerManager.loopCount
+        // This is a fallback; the primary trackView call happens from FeedView
+        currentVideoId = nil
+        videoStartTime = nil
+
+        // Only track if they watched at least 0.5s (filter out scroll-throughs)
+        guard duration >= 0.5 else { return }
+        trackView(videoId: videoId, loopCount: 0, watchDuration: duration)
     }
 
     func likeVideo(videoId: String) {

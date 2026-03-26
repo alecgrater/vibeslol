@@ -15,6 +15,8 @@ from app.models.follow import Follow
 from app.models.like import Like
 from app.models.user import User
 from app.models.video import Video
+from app.models.video_view import VideoView
+from app.recommendations.engine import get_recommended_feed
 from app.schemas import (
     CommentCreateRequest,
     CommentOut,
@@ -24,6 +26,8 @@ from app.schemas import (
     UserOut,
     VideoOut,
     VideoUploadOut,
+    WatchEventOut,
+    WatchEventRequest,
 )
 
 router = APIRouter(prefix="/api")
@@ -92,16 +96,11 @@ def _user_out(user: User, follower_count: int = 0, following_count: int = 0, vid
 async def get_feed(
     page: int = 0,
     limit: int = 20,
+    user_id: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
 ):
-    # V0: reverse-chronological with a sprinkle of random. Algorithm V1 comes later.
-    result = await db.execute(
-        select(Video)
-        .order_by(Video.created_at.desc())
-        .offset(page * limit)
-        .limit(limit)
-    )
-    videos = result.scalars().all()
+    # V1: Algorithm-powered feed with popularity + collaborative filtering + recency
+    videos = await get_recommended_feed(db, user_id=user_id, page=page, limit=limit)
     out = []
     for v in videos:
         author = await db.get(User, v.author_id)
@@ -349,3 +348,31 @@ async def check_is_following(
         select(Follow).where(Follow.follower_id == follower_id, Follow.following_id == user_id)
     )
     return {"following": existing.scalar_one_or_none() is not None}
+
+
+# ---------- Analytics ----------
+
+@router.post("/analytics/watch", response_model=WatchEventOut)
+async def track_watch_event(
+    body: WatchEventRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    # Log the watch event
+    view = VideoView(
+        user_id=body.user_id,
+        video_id=body.video_id,
+        watch_duration_ms=body.watch_duration_ms,
+        loop_count=body.loop_count,
+        skipped=body.skipped,
+        watch_percentage=body.watch_percentage,
+    )
+    db.add(view)
+
+    # Update the video's aggregate loop count
+    if body.loop_count > 0:
+        video = await db.get(Video, body.video_id)
+        if video:
+            video.loop_count += body.loop_count
+
+    await db.commit()
+    return WatchEventOut(status="ok")
