@@ -12,6 +12,17 @@ struct User: Identifiable, Codable {
     let isAnonymous: Bool
     let createdAt: Date
 
+    enum CodingKeys: String, CodingKey {
+        case id, username, bio
+        case displayName = "display_name"
+        case avatarURL = "avatar_url"
+        case followerCount = "follower_count"
+        case followingCount = "following_count"
+        case videoCount = "video_count"
+        case isAnonymous = "is_anonymous"
+        case createdAt = "created_at"
+    }
+
     static var anonymous: User {
         User(
             id: UUID().uuidString,

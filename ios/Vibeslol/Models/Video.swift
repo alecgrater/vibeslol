@@ -12,6 +12,17 @@ struct Video: Identifiable, Codable {
     let loopCount: Int
     let createdAt: Date
 
+    enum CodingKeys: String, CodingKey {
+        case id, username, caption
+        case videoURL = "video_url"
+        case thumbnailURL = "thumbnail_url"
+        case likeCount = "like_count"
+        case commentCount = "comment_count"
+        case shareCount = "share_count"
+        case loopCount = "loop_count"
+        case createdAt = "created_at"
+    }
+
     /// Returns a file URL for a bundled video, or a remote URL
     var resolvedURL: URL? {
         // Check if it's a bundle resource name (e.g. "video1")

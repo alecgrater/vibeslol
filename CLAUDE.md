@@ -46,8 +46,9 @@ vibeslol/
 │   │   ├── main.py               # FastAPI app with /health endpoint
 │   │   ├── core/config.py        # DB config, Cloudflare keys, app settings
 │   │   ├── core/database.py      # Async SQLAlchemy session
-│   │   ├── api/                  # Route handlers (empty)
-│   │   ├── models/               # DB models (empty)
+│   │   ├── api/routes.py         # /api/users, /api/videos endpoints
+│   │   ├── models/               # User, Video, Like, Follow DB models
+│   │   ├── schemas.py            # Pydantic request/response schemas
 │   │   ├── services/             # Business logic (empty)
 │   │   └── recommendations/      # Algorithm (empty)
 │   └── pyproject.toml
@@ -96,8 +97,8 @@ vibeslol/
 ### BUILD QUEUE (do these in order, one per session)
 - [x] **Feature A: Camera + Recording Screen** — In-app camera with countdown timer, record 6s video, preview before posting. Add CameraView.swift, CameraViewModel.swift. Wire up the Record tab.
 - [x] **Feature B: Trim-to-6s Tool** — When uploading from camera roll, let user select a 6s window from a longer video. Scrubber UI with preview. Wire up the photo library button already in CameraView.swift.
-- [ ] **Feature C: Backend API — Users + Videos** — SQLAlchemy models for User/Video/Like/Follow. API endpoints: POST /users/anonymous, GET /videos/feed, POST /videos/{id}/like, POST /videos (upload). Wire up APIClient.swift.
-- [ ] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via API. Store device token in Keychain. Show username in Profile tab.
+- [x] **Feature C: Backend API — Users + Videos** — SQLAlchemy models for User/Video/Like/Follow. API endpoints: POST /users/anonymous, GET /videos/feed, POST /videos/{id}/like, POST /videos (upload). Wire up APIClient.swift.
+- [ ] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab.
 - [ ] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
 - [ ] **Feature F: User Profiles + Follow System** — Profile screen showing user's videos in a grid. Follow/unfollow button. Follower/following counts. Following tab in feed.
 - [ ] **Feature G: Algorithm V1** — Track watch time, loops, skips. Build simple recommendation engine (popularity + collaborative filtering). Replace mock feed with algorithm-served feed.
@@ -133,6 +134,19 @@ vibeslol/
 - Drag gesture on scrubber tracks dragStartScrub to handle incremental translation correctly
 - NSPhotoLibraryUsageDescription added to both Debug and Release build settings
 - Gotcha for Feature C: MovieTransferable is defined in CameraViewModel.swift — if it needs to be reused elsewhere, consider moving to Models/
+
+**Feature C (Backend API — Users + Videos):**
+- New files: models/base.py (DeclarativeBase), models/user.py (User), models/video.py (Video), models/like.py (Like), models/follow.py (Follow), schemas.py (Pydantic schemas), api/routes.py (all API endpoints)
+- Modified: models/__init__.py (exports all models), main.py (lifespan for table creation, router include, static file mount for uploads), APIClient.swift (full HTTP client with real endpoints), Video.swift (added CodingKeys for snake_case API), User.swift (added CodingKeys for snake_case API), FeedViewModel.swift (async API calls with bundled fallback, pagination support)
+- API endpoints: POST /api/users/anonymous, GET /api/users/{id}, GET /api/videos/feed (paginated, reverse-chrono), POST /api/videos (multipart upload), POST /api/videos/{id}/like (toggle like/unlike)
+- Database tables auto-created via metadata.create_all in lifespan (dev only — use alembic for prod)
+- Video uploads saved to backend/uploads/ and served via FastAPI StaticFiles mount
+- APIClient.swift includes multipart form-data upload helper (Data extensions), UploadResponse/LikeResponse/APIError types
+- FeedViewModel now calls API with graceful fallback to Video.mockFeed when backend is unreachable
+- Like endpoint is a toggle (like/unlike) and returns new count + liked status
+- Python 3.8 constraint: all models use typing.Optional instead of str | None
+- Gotcha for Feature D: APIClient.likeVideo requires userId param — Feature D needs to store the user ID from createAnonymousUser and pass it through. FeedViewModel.likeVideo has a TODO to wire this up once auth exists.
+- Gotcha for Feature D: The createAnonymousUser endpoint accepts optional device_token in the body. Feature D should generate and store a device UUID in Keychain, then pass it here.
 
 ### INSTRUCTIONS FOR AUTONOMOUS BUILD
 When starting a new session after /clear:
