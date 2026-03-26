@@ -98,7 +98,7 @@ vibeslol/
 - [x] **Feature A: Camera + Recording Screen** — In-app camera with countdown timer, record 6s video, preview before posting. Add CameraView.swift, CameraViewModel.swift. Wire up the Record tab.
 - [x] **Feature B: Trim-to-6s Tool** — When uploading from camera roll, let user select a 6s window from a longer video. Scrubber UI with preview. Wire up the photo library button already in CameraView.swift.
 - [x] **Feature C: Backend API — Users + Videos** — SQLAlchemy models for User/Video/Like/Follow. API endpoints: POST /users/anonymous, GET /videos/feed, POST /videos/{id}/like, POST /videos (upload). Wire up APIClient.swift.
-- [ ] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab.
+- [x] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab. — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab.
 - [ ] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
 - [ ] **Feature F: User Profiles + Follow System** — Profile screen showing user's videos in a grid. Follow/unfollow button. Follower/following counts. Following tab in feed.
 - [ ] **Feature G: Algorithm V1** — Track watch time, loops, skips. Build simple recommendation engine (popularity + collaborative filtering). Replace mock feed with algorithm-served feed.
@@ -147,6 +147,16 @@ vibeslol/
 - Python 3.8 constraint: all models use typing.Optional instead of str | None
 - Gotcha for Feature D: APIClient.likeVideo requires userId param — Feature D needs to store the user ID from createAnonymousUser and pass it through. FeedViewModel.likeVideo has a TODO to wire this up once auth exists.
 - Gotcha for Feature D: The createAnonymousUser endpoint accepts optional device_token in the body. Feature D should generate and store a device UUID in Keychain, then pass it here.
+
+**Feature D (Auto-Account Generation):**
+- New files: KeychainService.swift (Services), AuthManager.swift (Services), ProfileView.swift (Views)
+- Modified: VibeslolApp.swift (added @StateObject AuthManager + .task bootstrap), ContentView.swift (replaced Profile placeholder with ProfileView), FeedViewModel.swift (wired likeVideo to AuthManager.shared.userId + API sync with server-confirmed count), project.pbxproj (3 new files)
+- KeychainService wraps Security framework with kSecClassGenericPassword for userId, deviceToken, username storage. Uses kSecAttrAccessibleAfterFirstUnlock for persistence.
+- AuthManager is a @MainActor ObservableObject singleton. bootstrap() checks Keychain for existing userId — if found, refreshes from API (falls back to cached Keychain data if API unreachable). If no userId, generates UUID device token, calls createAnonymousUser, stores credentials in Keychain. Handles offline first-launch gracefully with local-only User.anonymous fallback.
+- ProfileView shows avatar circle with initial letter, @username, anonymous badge, follower/following/video stats, empty state for no videos. Uses vibePurple glow accents on OLED black.
+- FeedViewModel.likeVideo now does optimistic update + async API call with AuthManager.shared.userId, updates to server-confirmed like count on success.
+- Gotcha for Feature E: AuthManager.shared.userId is the source of truth for the current user's ID. Use it in any API call that needs user identity. AuthManager.shared.currentUser has the full User object. Like button in FeedView should track liked state per-video (not yet done — Feature E should add a Set<String> of liked video IDs).
+- Gotcha for Feature E: ProfileView currently shows static 0 counts. Feature F will need to refresh user from API to get real counts.
 
 ### INSTRUCTIONS FOR AUTONOMOUS BUILD
 When starting a new session after /clear:

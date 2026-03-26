@@ -21,7 +21,7 @@ struct ContentView: View {
                 case .notifications:
                     PlaceholderView(title: "Notifications")
                 case .profile:
-                    PlaceholderView(title: "Profile")
+                    ProfileView()
                 }
             }
             .ignoresSafeArea()

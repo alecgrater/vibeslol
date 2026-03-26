@@ -32,6 +32,9 @@
 		AA000023 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000023; };
 		AA000024 /* VideoTrimmerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000024; };
 		AA000025 /* VideoTrimmerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000025; };
+		AA000026 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000026; };
+		AA000027 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000027; };
+		AA000028 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000028; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,6 +63,9 @@
 		AB000023 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		AB000024 /* VideoTrimmerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTrimmerView.swift; sourceTree = "<group>"; };
 		AB000025 /* VideoTrimmerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTrimmerViewModel.swift; sourceTree = "<group>"; };
+		AB000026 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		AB000027 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		AB000028 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		AC000001 /* Vibeslol.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vibeslol.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -116,6 +122,7 @@
 				AB000021 /* CameraView.swift */,
 				AB000023 /* CameraPreviewView.swift */,
 				AB000024 /* VideoTrimmerView.swift */,
+				AB000028 /* ProfileView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -146,6 +153,8 @@
 				AB000009 /* APIClient.swift */,
 				AB000013 /* VideoPlayerManager.swift */,
 				AB000015 /* VideoPreloader.swift */,
+				AB000026 /* KeychainService.swift */,
+				AB000027 /* AuthManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -279,6 +288,9 @@
 				AA000023 /* CameraPreviewView.swift in Sources */,
 				AA000024 /* VideoTrimmerView.swift in Sources */,
 				AA000025 /* VideoTrimmerViewModel.swift in Sources */,
+				AA000026 /* KeychainService.swift in Sources */,
+				AA000027 /* AuthManager.swift in Sources */,
+				AA000028 /* ProfileView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

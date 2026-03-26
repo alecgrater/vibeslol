@@ -49,7 +49,7 @@ class FeedViewModel: ObservableObject {
     }
 
     func likeVideo(videoId: String) {
-        // Optimistic update, then sync with API
+        // Optimistic update
         if let index = videos.firstIndex(where: { $0.id == videoId }) {
             let v = videos[index]
             videos[index] = Video(
@@ -60,6 +60,24 @@ class FeedViewModel: ObservableObject {
                 createdAt: v.createdAt
             )
         }
-        // TODO: Call APIClient.shared.likeVideo once user auth is wired up (Feature D)
+        // Sync with API using stored userId
+        guard let userId = AuthManager.shared.userId else { return }
+        Task {
+            do {
+                let result = try await APIClient.shared.likeVideo(id: videoId, userId: userId)
+                if let index = videos.firstIndex(where: { $0.id == videoId }) {
+                    let v = videos[index]
+                    videos[index] = Video(
+                        id: v.id, username: v.username, caption: v.caption,
+                        videoURL: v.videoURL, thumbnailURL: v.thumbnailURL,
+                        likeCount: result.likeCount, commentCount: v.commentCount,
+                        shareCount: v.shareCount, loopCount: v.loopCount,
+                        createdAt: v.createdAt
+                    )
+                }
+            } catch {
+                print("[feed] Like API error: \(error.localizedDescription)")
+            }
+        }
     }
 }
