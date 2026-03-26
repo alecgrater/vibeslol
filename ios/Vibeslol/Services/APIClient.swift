@@ -187,6 +187,41 @@ final class APIClient {
         try checkResponse(response)
     }
 
+    // MARK: - Report
+
+    func reportVideo(videoId: String, reporterId: String, reason: String, details: String? = nil) async throws -> ReportResponse {
+        let url = URL(string: "\(baseURL)/api/videos/\(videoId)/report")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        var body: [String: String] = ["reporter_id": reporterId, "reason": reason]
+        if let details = details {
+            body["details"] = details
+        }
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try checkResponse(response)
+        return try decoder.decode(ReportResponse.self, from: data)
+    }
+
+    // MARK: - Block
+
+    func toggleBlock(userId: String, blockerId: String) async throws -> BlockResponse {
+        let url = URL(string: "\(baseURL)/api/users/\(userId)/block")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body = ["blocker_id": blockerId]
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try checkResponse(response)
+        return try decoder.decode(BlockResponse.self, from: data)
+    }
+
     // MARK: - Helpers
 
     private func checkResponse(_ response: URLResponse) throws {
@@ -231,6 +266,21 @@ struct FollowResponse: Codable {
         case following
         case followerCount = "follower_count"
     }
+}
+
+struct ReportResponse: Codable {
+    let id: Int
+    let status: String
+    let createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id, status
+        case createdAt = "created_at"
+    }
+}
+
+struct BlockResponse: Codable {
+    let blocked: Bool
 }
 
 enum APIError: LocalizedError {

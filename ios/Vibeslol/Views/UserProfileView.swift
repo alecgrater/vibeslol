@@ -3,6 +3,7 @@ import SwiftUI
 struct UserProfileView: View {
     @StateObject private var viewModel: UserProfileViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showBlockConfirm = false
 
     init(userId: String) {
         _viewModel = StateObject(wrappedValue: UserProfileViewModel(userId: userId))
@@ -123,6 +124,38 @@ struct UserProfileView: View {
                         .font(.body.bold())
                 }
             }
+
+            if AuthManager.shared.userId != viewModel.user?.id {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(role: .destructive) {
+                            showBlockConfirm = true
+                        } label: {
+                            Label(
+                                viewModel.isBlocked ? "Unblock User" : "Block User",
+                                systemImage: viewModel.isBlocked ? "hand.raised.slash" : "hand.raised"
+                            )
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .foregroundColor(.white)
+                            .font(.body)
+                    }
+                }
+            }
+        }
+        .alert(
+            viewModel.isBlocked ? "Unblock this user?" : "Block this user?",
+            isPresented: $showBlockConfirm
+        ) {
+            Button("Cancel", role: .cancel) {}
+            Button(viewModel.isBlocked ? "Unblock" : "Block", role: .destructive) {
+                viewModel.toggleBlock()
+            }
+        } message: {
+            Text(viewModel.isBlocked
+                 ? "You'll start seeing their content again."
+                 : "You won't see their videos in your feed. You'll also unfollow them.")
         }
         .onAppear {
             viewModel.load()

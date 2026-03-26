@@ -95,3 +95,52 @@ class WatchEventRequest(BaseModel):
 
 class WatchEventOut(BaseModel):
     status: str = "ok"
+
+
+# --- Report ---
+
+class ReportCreateRequest(BaseModel):
+    reporter_id: str
+    reason: str
+    details: Optional[str] = None
+
+
+class ReportOut(BaseModel):
+    id: int
+    status: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# --- Block ---
+
+class BlockToggleRequest(BaseModel):
+    blocker_id: str
+
+
+class BlockOut(BaseModel):
+    blocked: bool
+
+
+# --- Analytics ---
+
+class AnalyticsOverview(BaseModel):
+    total_users: int
+    total_videos: int
+    total_views: int
+    total_likes: int
+    avg_loops_per_video: float
+    avg_watch_percentage: float
+
+
+class TrendingVideoOut(BaseModel):
+    id: str
+    author_id: str
+    username: str
+    caption: Optional[str] = None
+    like_count: int
+    comment_count: int
+    loop_count: int
+    view_count: int
+    engagement_score: float

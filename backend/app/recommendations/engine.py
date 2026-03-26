@@ -111,6 +111,7 @@ async def get_recommended_feed(
     user_id: Optional[str] = None,
     page: int = 0,
     limit: int = 20,
+    blocked_author_ids: Optional[List[str]] = None,
 ) -> List[Video]:
     """
     V1 recommendation engine.
@@ -120,9 +121,11 @@ async def get_recommended_feed(
     """
     # Fetch a larger candidate pool to score and rank
     pool_size = limit * 5
-    result = await db.execute(
-        select(Video).order_by(Video.created_at.desc()).limit(pool_size)
-    )
+    query = select(Video)
+    if blocked_author_ids:
+        query = query.where(Video.author_id.notin_(blocked_author_ids))
+    query = query.order_by(Video.created_at.desc()).limit(pool_size)
+    result = await db.execute(query)
     all_videos = list(result.scalars().all())
 
     if not all_videos:

@@ -62,38 +62,45 @@ struct CommentSheetView: View {
             Divider()
                 .background(Color.white.opacity(0.1))
 
-            HStack(spacing: 10) {
-                TextField("Add a comment...", text: $newCommentText)
-                    .textFieldStyle(.plain)
-                    .foregroundColor(.white)
-                    .font(.subheadline)
-                    .focused($isInputFocused)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Color.white.opacity(0.08))
-                    .clipShape(Capsule())
+            if AuthManager.shared.currentUser?.isAnonymous == true {
+                Text("Create an account to comment")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.4))
+                    .padding(.vertical, 12)
+            } else {
+                HStack(spacing: 10) {
+                    TextField("Add a comment...", text: $newCommentText)
+                        .textFieldStyle(.plain)
+                        .foregroundColor(.white)
+                        .font(.subheadline)
+                        .focused($isInputFocused)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(Capsule())
 
-                if !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Button {
-                        let text = newCommentText
-                        newCommentText = ""
-                        viewModel.postComment(text: text)
-                        HapticsService.shared.lightTap()
-                        // Update parent comment count
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            onCommentCountChanged(viewModel.comments.count)
+                    if !newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Button {
+                            let text = newCommentText
+                            newCommentText = ""
+                            viewModel.postComment(text: text)
+                            HapticsService.shared.lightTap()
+                            // Update parent comment count
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                onCommentCountChanged(viewModel.comments.count)
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.vibePurple)
                         }
-                    } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.vibePurple)
+                        .disabled(viewModel.isSending)
                     }
-                    .disabled(viewModel.isSending)
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .padding(.bottom, 4)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .padding(.bottom, 4)
         }
         .background(Color.black.opacity(0.95))
         .onAppear {

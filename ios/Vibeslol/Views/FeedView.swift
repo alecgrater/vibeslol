@@ -89,8 +89,10 @@ struct FeedView: View {
     private var feedModeTabs: some View {
         HStack(spacing: 24) {
             Button {
-                viewModel.switchFeedMode(.forYou)
-                currentIndex = 0
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    viewModel.switchFeedMode(.forYou)
+                    currentIndex = 0
+                }
             } label: {
                 VStack(spacing: 4) {
                     Text("For You")
@@ -104,8 +106,10 @@ struct FeedView: View {
             }
 
             Button {
-                viewModel.switchFeedMode(.following)
-                currentIndex = 0
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    viewModel.switchFeedMode(.following)
+                    currentIndex = 0
+                }
             } label: {
                 VStack(spacing: 4) {
                     Text("Following")
@@ -159,6 +163,9 @@ struct VideoCell: View {
     @State private var overlayTimer: Timer?
     @State private var showComments = false
     @State private var showShareSheet = false
+    @State private var showReportSheet = false
+    @State private var showDoubleTapHeart = false
+    @State private var likeScale: CGFloat = 1.0
 
     private var isLiked: Bool {
         viewModel.likedVideoIds.contains(video.id)
@@ -174,9 +181,24 @@ struct VideoCell: View {
                 Color.black
             }
 
-            // Tap to toggle play/overlay
+            // Tap to toggle play/overlay, double-tap to like
             Color.clear
                 .contentShape(Rectangle())
+                .onTapGesture(count: 2) {
+                    // Double-tap to like
+                    if !isLiked {
+                        viewModel.likeVideo(videoId: video.id)
+                        HapticsService.shared.likeHaptic()
+                    }
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                        showDoubleTapHeart = true
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            showDoubleTapHeart = false
+                        }
+                    }
+                }
                 .onTapGesture {
                     playerManager.togglePlayback()
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -184,6 +206,17 @@ struct VideoCell: View {
                     }
                     resetOverlayTimer()
                 }
+
+            // Double-tap heart burst
+            if showDoubleTapHeart {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 80))
+                    .foregroundColor(.white)
+                    .shadow(color: .vibePurple.opacity(0.6), radius: 20)
+                    .scaleEffect(showDoubleTapHeart ? 1.0 : 0.3)
+                    .opacity(showDoubleTapHeart ? 1.0 : 0.0)
+                    .transition(.scale.combined(with: .opacity))
+            }
 
             // Pause icon flash
             if !playerManager.isPlaying && isActive {
@@ -239,6 +272,14 @@ struct VideoCell: View {
         .sheet(isPresented: $showShareSheet) {
             ShareSheetView(video: video)
                 .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showReportSheet) {
+            ReportSheetView(videoId: video.id) {
+                HapticsService.shared.success()
+            }
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.hidden)
+            .presentationBackground(.clear)
         }
     }
 
@@ -296,8 +337,15 @@ struct VideoCell: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                         viewModel.likeVideo(videoId: video.id)
                         HapticsService.shared.likeHaptic()
+                        likeScale = 1.3
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
+                            likeScale = 1.0
+                        }
                     }
                 }
+                .scaleEffect(likeScale)
 
                 ActionButton(icon: "bubble.right", count: video.commentCount) {
                     showComments = true
@@ -305,6 +353,16 @@ struct VideoCell: View {
 
                 ActionButton(icon: "arrowshape.turn.up.right", count: video.shareCount) {
                     showShareSheet = true
+                }
+
+                // Report button
+                Button {
+                    showReportSheet = true
+                } label: {
+                    Image(systemName: "flag")
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.5))
+                        .shadow(color: .vibePurple.opacity(0.2), radius: 4)
                 }
             }
             .padding(.trailing, 12)

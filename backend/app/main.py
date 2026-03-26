@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Vibeslol API",
     description="Backend API for Vibeslol — 6-second video platform",
-    version="0.2.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -38,4 +38,4 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 @app.get("/health")
 async def health():
-    return {"status": "vibing", "version": "0.2.0"}
+    return {"status": "vibing", "version": "1.0.0"}

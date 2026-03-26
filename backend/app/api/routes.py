@@ -10,19 +10,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import VIDEO_DURATION_SECONDS
 from app.core.database import get_db
+from app.models.block import Block
 from app.models.comment import Comment
 from app.models.follow import Follow
 from app.models.like import Like
+from app.models.report import Report
 from app.models.user import User
 from app.models.video import Video
 from app.models.video_view import VideoView
 from app.recommendations.engine import get_recommended_feed
 from app.schemas import (
+    AnalyticsOverview,
+    BlockOut,
+    BlockToggleRequest,
     CommentCreateRequest,
     CommentOut,
     CreateAnonymousUserRequest,
     FollowOut,
     LikeOut,
+    ReportCreateRequest,
+    ReportOut,
+    TrendingVideoOut,
     UserOut,
     VideoOut,
     VideoUploadOut,
@@ -100,7 +108,15 @@ async def get_feed(
     db: AsyncSession = Depends(get_db),
 ):
     # V1: Algorithm-powered feed with popularity + collaborative filtering + recency
-    videos = await get_recommended_feed(db, user_id=user_id, page=page, limit=limit)
+    # Filter out blocked users' content
+    blocked_ids: list = []
+    if user_id:
+        blocked_result = await db.execute(
+            select(Block.blocked_id).where(Block.blocker_id == user_id)
+        )
+        blocked_ids = [row[0] for row in blocked_result.all()]
+
+    videos = await get_recommended_feed(db, user_id=user_id, page=page, limit=limit, blocked_author_ids=blocked_ids)
     out = []
     for v in videos:
         author = await db.get(User, v.author_id)
@@ -216,6 +232,10 @@ async def create_comment(
     user = await db.get(User, body.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # Anonymous users cannot comment (PRD requirement)
+    if user.is_anonymous:
+        raise HTTPException(status_code=403, detail="Anonymous users cannot comment. Create an account first.")
 
     comment = Comment(user_id=body.user_id, video_id=video_id, text=body.text)
     db.add(comment)
@@ -376,3 +396,130 @@ async def track_watch_event(
 
     await db.commit()
     return WatchEventOut(status="ok")
+
+
+# ---------- Report ----------
+
+@router.post("/videos/{video_id}/report", response_model=ReportOut, status_code=201)
+async def report_video(
+    video_id: str,
+    body: ReportCreateRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    video = await db.get(Video, video_id)
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    user = await db.get(User, body.reporter_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    report = Report(
+        reporter_id=body.reporter_id,
+        video_id=video_id,
+        reason=body.reason,
+        details=body.details,
+    )
+    db.add(report)
+    await db.commit()
+    await db.refresh(report)
+    return ReportOut(id=report.id, status=report.status, created_at=report.created_at)
+
+
+# ---------- Block ----------
+
+@router.post("/users/{user_id}/block", response_model=BlockOut)
+async def toggle_block(
+    user_id: str,
+    body: BlockToggleRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    if user_id == body.blocker_id:
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+
+    target = await db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    existing = await db.execute(
+        select(Block).where(Block.blocker_id == body.blocker_id, Block.blocked_id == user_id)
+    )
+    existing_block = existing.scalar_one_or_none()
+
+    if existing_block:
+        await db.delete(existing_block)
+        await db.commit()
+        return BlockOut(blocked=False)
+    else:
+        block = Block(blocker_id=body.blocker_id, blocked_id=user_id)
+        db.add(block)
+        # Also unfollow if following
+        existing_follow = await db.execute(
+            select(Follow).where(Follow.follower_id == body.blocker_id, Follow.following_id == user_id)
+        )
+        follow = existing_follow.scalar_one_or_none()
+        if follow:
+            await db.delete(follow)
+        await db.commit()
+        return BlockOut(blocked=True)
+
+
+# ---------- Analytics Dashboard ----------
+
+@router.get("/analytics/overview", response_model=AnalyticsOverview)
+async def analytics_overview(db: AsyncSession = Depends(get_db)):
+    total_users = await db.scalar(select(func.count()).select_from(User)) or 0
+    total_videos = await db.scalar(select(func.count()).select_from(Video)) or 0
+    total_views = await db.scalar(select(func.count()).select_from(VideoView)) or 0
+    total_likes = await db.scalar(select(func.count()).select_from(Like)) or 0
+
+    avg_loops = await db.scalar(
+        select(func.avg(Video.loop_count)).where(Video.loop_count > 0)
+    ) or 0.0
+
+    avg_watch_pct = await db.scalar(
+        select(func.avg(VideoView.watch_percentage))
+    ) or 0.0
+
+    return AnalyticsOverview(
+        total_users=total_users,
+        total_videos=total_videos,
+        total_views=total_views,
+        total_likes=total_likes,
+        avg_loops_per_video=round(float(avg_loops), 2),
+        avg_watch_percentage=round(float(avg_watch_pct), 2),
+    )
+
+
+@router.get("/analytics/trending", response_model=List[TrendingVideoOut])
+async def analytics_trending(
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db),
+):
+    # Get videos with view counts, ranked by engagement score
+    result = await db.execute(
+        select(Video).order_by(
+            (Video.like_count + Video.loop_count * 2 + Video.comment_count).desc()
+        ).limit(limit)
+    )
+    videos = result.scalars().all()
+
+    out = []
+    for v in videos:
+        author = await db.get(User, v.author_id)
+        view_count = await db.scalar(
+            select(func.count()).where(VideoView.video_id == v.id)
+        ) or 0
+        score = float(v.like_count + v.loop_count * 2 + v.comment_count * 1.5 + v.share_count * 3)
+        out.append(TrendingVideoOut(
+            id=v.id,
+            author_id=v.author_id,
+            username=author.username if author else "unknown",
+            caption=v.caption,
+            like_count=v.like_count,
+            comment_count=v.comment_count,
+            loop_count=v.loop_count,
+            view_count=view_count,
+            engagement_score=round(score, 1),
+        ))
+    return out

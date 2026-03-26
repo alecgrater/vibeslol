@@ -28,7 +28,8 @@ vibeslol/
 │   │   ├── CameraPreviewView.swift # AVCaptureVideoPreviewLayer UIViewRepresentable
 │   │   ├── VideoTrimmerView.swift # Trim-to-6s scrubber UI with thumbnail strip
 │   │   ├── CommentSheetView.swift # Comment bottom sheet with posting
-│   │   └── UserProfileView.swift  # Other user's profile with video grid + follow button
+│   │   ├── UserProfileView.swift  # Other user's profile with video grid + follow button
+│   │   └── ReportSheetView.swift  # Report video bottom sheet with reason picker
 │   ├── ViewModels/
 │   │   ├── FeedViewModel.swift    # Feed data + analytics stubs
 │   │   ├── CameraViewModel.swift  # AVCaptureSession, recording, timer logic
@@ -52,7 +53,7 @@ vibeslol/
 │   │   ├── core/config.py        # DB config, Cloudflare keys, app settings
 │   │   ├── core/database.py      # Async SQLAlchemy session
 │   │   ├── api/routes.py         # /api/users, /api/videos endpoints
-│   │   ├── models/               # User, Video, Like, Follow, VideoView DB models
+│   │   ├── models/               # User, Video, Like, Follow, VideoView, Report, Block DB models
 │   │   ├── schemas.py            # Pydantic request/response schemas
 │   │   ├── services/             # Business logic (empty)
 │   │   └── recommendations/      # V1 recommendation engine
@@ -107,7 +108,7 @@ vibeslol/
 - [x] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
 - [x] **Feature F: User Profiles + Follow System** — Profile screen showing user's videos in a grid. Follow/unfollow button. Follower/following counts. Following tab in feed.
 - [x] **Feature G: Algorithm V1** — Track watch time, loops, skips. Build simple recommendation engine (popularity + collaborative filtering). Replace mock feed with algorithm-served feed.
-- [ ] **Feature H: Polish + Launch Prep** — UI animations refinement, content moderation (report/block), analytics dashboard, App Store submission prep.
+- [x] **Feature H: Polish + Launch Prep** — UI animations refinement, content moderation (report/block), analytics dashboard, App Store submission prep.
 
 ### COMPLETED FEATURE LOG
 <!-- After each feature, append a brief entry here so future sessions know what exists -->
@@ -199,6 +200,24 @@ vibeslol/
 - Key decision: Kept following-feed as reverse-chronological (algorithm only powers For You tab). Following-feed is relationship-based, not ranked.
 - Key decision: Used candidate pool approach (fetch 5× limit, score all, take top) rather than SQL-level scoring for flexibility.
 - Gotcha for Feature H: Anonymous comment gating still needed. Also, the VideoView table should be indexed on (user_id, video_id) for production performance. The N+1 query issue in routes.py (fetching each author separately) persists — Feature H should add eager loading or a JOIN.
+
+**Feature H (Polish + Launch Prep):**
+- New files: ReportSheetView.swift (Views), report.py (backend models), block.py (backend models)
+- Modified: FeedView.swift (double-tap-to-like with heart burst animation, like button scale bounce, report button + sheet, animated feed mode tab transitions), CommentSheetView.swift (anonymous comment gating - shows "Create an account to comment" for anonymous users), UserProfileView.swift (block/unblock via toolbar menu + confirmation alert), UserProfileViewModel.swift (added isBlocked state, toggleBlock method), APIClient.swift (reportVideo + toggleBlock endpoints, ReportResponse + BlockResponse types), routes.py (POST /api/videos/{id}/report, POST /api/users/{id}/block toggle, GET /api/analytics/overview, GET /api/analytics/trending, anonymous comment gating 403), schemas.py (ReportCreateRequest/ReportOut/BlockToggleRequest/BlockOut/AnalyticsOverview/TrendingVideoOut), models/__init__.py (exports Report + Block), recommendations/engine.py (blocked_author_ids filter param), main.py (version bump to 1.0.0), project.pbxproj (1 new file + version bump to 1.0.0)
+- Backend Report model: reporter_id, video_id, reason, details, status (pending/reviewed/dismissed)
+- Backend Block model: blocker_id, blocked_id with unique constraint. Block toggle auto-unfollows.
+- Feed filters blocked users' videos via blocked_author_ids passed to recommendation engine
+- Anonymous comment gating enforced both server-side (403) and client-side (hidden input field)
+- Double-tap-to-like shows 80pt heart burst with purple glow shadow, fades after 0.8s
+- Like button has scale bounce animation (1.0 → 1.3 → 1.0 with spring physics)
+- Feed mode tabs (For You/Following) now animate with spring transitions
+- Report flow: flag icon → reason picker sheet → API submission → confirmation checkmark view
+- Block flow: toolbar ellipsis menu → confirmation alert → API toggle → updates follow state
+- Analytics dashboard endpoints: GET /api/analytics/overview (total users/videos/views/likes, avg loops, avg watch %), GET /api/analytics/trending (top videos by engagement score)
+- Version bumped from 0.1.0 → 1.0.0 (iOS) and 0.2.0 → 1.0.0 (backend)
+- Key decision: Kept analytics as backend-only endpoints (no iOS analytics view) — PRD says "User-facing: None at MVP"
+- Key decision: Block toggle pattern matches follow toggle (POST creates/deletes row, returns new state)
+- All features compiled successfully on iPhone 17 Pro simulator
 
 ### INSTRUCTIONS FOR AUTONOMOUS BUILD
 When starting a new session after /clear:

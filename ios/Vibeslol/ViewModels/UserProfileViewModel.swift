@@ -5,6 +5,7 @@ class UserProfileViewModel: ObservableObject {
     @Published var user: User?
     @Published var videos: [Video] = []
     @Published var isFollowing = false
+    @Published var isBlocked = false
     @Published var isLoading = true
 
     let userId: String
@@ -80,6 +81,24 @@ class UserProfileViewModel: ObservableObject {
                 // Revert
                 isFollowing = wasFollowing
                 print("[profile] Follow API error: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    func toggleBlock() {
+        guard let myId = AuthManager.shared.userId, myId != userId else { return }
+
+        HapticsService.shared.mediumTap()
+
+        Task {
+            do {
+                let result = try await APIClient.shared.toggleBlock(userId: userId, blockerId: myId)
+                isBlocked = result.blocked
+                if result.blocked {
+                    isFollowing = false
+                }
+            } catch {
+                print("[profile] Block API error: \(error.localizedDescription)")
             }
         }
     }
