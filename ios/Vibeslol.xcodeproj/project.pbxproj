@@ -7,40 +7,40 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA000001 /* VibeslolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000001; };
-		AA000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000002; };
-		AA000003 /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000003; };
-		AA000004 /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000004; };
-		AA000005 /* Video.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000005; };
-		AA000006 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000006; };
-		AA000007 /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000007; };
-		AA000008 /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000008; };
-		AA000009 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000009; };
-		AA000010 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000010; };
-		AA000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB000011; };
-		AA000012 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB000012; };
-		AA000013 /* VideoPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000013; };
-		AA000014 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000014; };
-		AA000015 /* VideoPreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000015; };
-		AA000016 /* video1.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000016; };
-		AA000017 /* video2.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000017; };
-		AA000018 /* video3.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000018; };
-		AA000019 /* video4.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000019; };
-		AA000020 /* video5.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000020; };
-		AA000021 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000021; };
-		AA000022 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000022; };
-		AA000023 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000023; };
-		AA000024 /* VideoTrimmerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000024; };
-		AA000025 /* VideoTrimmerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000025; };
-		AA000026 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000026; };
-		AA000027 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000027; };
-		AA000028 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000028; };
-		AA000029 /* Comment.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000029; };
-		AA000030 /* CommentSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000030; };
-		AA000031 /* CommentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000031; };
-		AA000032 /* UserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000032; };
-		AA000033 /* UserProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000033; };
-		AA000034 /* ReportSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000034; };
+		AA000001 /* VibeslolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000001 /* VibeslolApp.swift */; };
+		AA000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000002 /* ContentView.swift */; };
+		AA000003 /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000003 /* FeedView.swift */; };
+		AA000004 /* TabBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000004 /* TabBarView.swift */; };
+		AA000005 /* Video.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000005 /* Video.swift */; };
+		AA000006 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000006 /* User.swift */; };
+		AA000007 /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000007 /* FeedViewModel.swift */; };
+		AA000008 /* HapticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000008 /* HapticsService.swift */; };
+		AA000009 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000009 /* APIClient.swift */; };
+		AA000010 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000010 /* Colors.swift */; };
+		AA000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB000011 /* Assets.xcassets */; };
+		AA000012 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB000012 /* Preview Assets.xcassets */; };
+		AA000013 /* VideoPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000013 /* VideoPlayerManager.swift */; };
+		AA000014 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000014 /* VideoPlayerView.swift */; };
+		AA000015 /* VideoPreloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000015 /* VideoPreloader.swift */; };
+		AA000016 /* video1.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000016 /* video1.mp4 */; };
+		AA000017 /* video2.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000017 /* video2.mp4 */; };
+		AA000018 /* video3.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000018 /* video3.mp4 */; };
+		AA000019 /* video4.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000019 /* video4.mp4 */; };
+		AA000020 /* video5.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = AB000020 /* video5.mp4 */; };
+		AA000021 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000021 /* CameraView.swift */; };
+		AA000022 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000022 /* CameraViewModel.swift */; };
+		AA000023 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000023 /* CameraPreviewView.swift */; };
+		AA000024 /* VideoTrimmerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000024 /* VideoTrimmerView.swift */; };
+		AA000025 /* VideoTrimmerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000025 /* VideoTrimmerViewModel.swift */; };
+		AA000026 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000026 /* KeychainService.swift */; };
+		AA000027 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000027 /* AuthManager.swift */; };
+		AA000028 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000028 /* ProfileView.swift */; };
+		AA000029 /* Comment.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000029 /* Comment.swift */; };
+		AA000030 /* CommentSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000030 /* CommentSheetView.swift */; };
+		AA000031 /* CommentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000031 /* CommentViewModel.swift */; };
+		AA000032 /* UserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000032 /* UserProfileView.swift */; };
+		AA000033 /* UserProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000033 /* UserProfileViewModel.swift */; };
+		AA000034 /* ReportSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000034 /* ReportSheetView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -109,7 +109,7 @@
 				AE000006 /* Models */,
 				AE000007 /* Services */,
 				AE000008 /* Utils */,
-				AE00000B /* Resources */,
+				AE00000B /* Resources/Videos */,
 				AB000011 /* Assets.xcassets */,
 				AE00000A /* Preview Content */,
 			);
@@ -201,7 +201,7 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		AE00000B /* Resources */ = {
+		AE00000B /* Resources/Videos */ = {
 			isa = PBXGroup;
 			children = (
 				AB000016 /* video1.mp4 */,
@@ -447,15 +447,16 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Vibeslol/Preview Content\"";
+				DEVELOPMENT_TEAM = JZ494CQJ38;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Vibeslol;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Vibeslol needs camera access to record 6-second videos.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vibeslol needs microphone access to record audio with your videos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Vibeslol needs photo library access to import videos for trimming.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -480,15 +481,16 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Vibeslol/Preview Content\"";
+				DEVELOPMENT_TEAM = JZ494CQJ38;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Vibeslol;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Vibeslol needs camera access to record 6-second videos.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vibeslol needs microphone access to record audio with your videos.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Vibeslol needs photo library access to import videos for trimming.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -527,7 +529,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = B2000001 /* Project object */;
 }
