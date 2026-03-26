@@ -2,6 +2,7 @@ import Foundation
 
 struct Video: Identifiable, Codable {
     let id: String
+    let authorId: String?
     let username: String
     let caption: String?
     let videoURL: String
@@ -14,6 +15,7 @@ struct Video: Identifiable, Codable {
 
     enum CodingKeys: String, CodingKey {
         case id, username, caption
+        case authorId = "author_id"
         case videoURL = "video_url"
         case thumbnailURL = "thumbnail_url"
         case likeCount = "like_count"
@@ -35,6 +37,7 @@ struct Video: Identifiable, Codable {
     static var mock: Video {
         Video(
             id: UUID().uuidString,
+            authorId: nil,
             username: "vibeslol",
             caption: "welcome to the chaos",
             videoURL: "video1",
@@ -51,35 +54,35 @@ struct Video: Identifiable, Codable {
     static var mockFeed: [Video] {
         [
             Video(
-                id: "1", username: "chaosqueen",
+                id: "1", authorId: nil, username: "chaosqueen",
                 caption: "balls multiply on every bounce",
                 videoURL: "video1",
                 thumbnailURL: nil, likeCount: 2400, commentCount: 89,
                 shareCount: 45, loopCount: 5600, createdAt: Date()
             ),
             Video(
-                id: "2", username: "vibechecker",
+                id: "2", authorId: nil, username: "vibechecker",
                 caption: "particles go brrr",
                 videoURL: "video2",
                 thumbnailURL: nil, likeCount: 890, commentCount: 34,
                 shareCount: 12, loopCount: 2100, createdAt: Date()
             ),
             Video(
-                id: "3", username: "scroll_addict",
+                id: "3", authorId: nil, username: "scroll_addict",
                 caption: "hypnotic pulse rings",
                 videoURL: "video3",
                 thumbnailURL: nil, likeCount: 156, commentCount: 8,
                 shareCount: 3, loopCount: 340, createdAt: Date()
             ),
             Video(
-                id: "4", username: "neon_dreams",
+                id: "4", authorId: nil, username: "neon_dreams",
                 caption: "dna but make it aesthetic",
                 videoURL: "video4",
                 thumbnailURL: nil, likeCount: 5200, commentCount: 201,
                 shareCount: 88, loopCount: 12000, createdAt: Date()
             ),
             Video(
-                id: "5", username: "sixsecking",
+                id: "5", authorId: nil, username: "sixsecking",
                 caption: "fractal tree grows in 6 seconds",
                 videoURL: "video5",
                 thumbnailURL: nil, likeCount: 1100, commentCount: 55,

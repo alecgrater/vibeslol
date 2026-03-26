@@ -29,6 +29,7 @@ class CreateAnonymousUserRequest(BaseModel):
 
 class VideoOut(BaseModel):
     id: str
+    author_id: str
     username: str
     caption: Optional[str] = None
     video_url: str
@@ -72,3 +73,10 @@ class CommentCreateRequest(BaseModel):
 class LikeOut(BaseModel):
     liked: bool
     like_count: int
+
+
+# --- Follow ---
+
+class FollowOut(BaseModel):
+    following: bool
+    follower_count: int

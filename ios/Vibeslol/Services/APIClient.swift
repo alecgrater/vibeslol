@@ -114,6 +114,46 @@ final class APIClient {
         return try decoder.decode(Comment.self, from: data)
     }
 
+    // MARK: - Follow
+
+    func toggleFollow(userId: String, followerId: String) async throws -> FollowResponse {
+        let url = URL(string: "\(baseURL)/api/users/\(userId)/follow")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = "follower_id=\(followerId)".data(using: .utf8)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try checkResponse(response)
+        return try decoder.decode(FollowResponse.self, from: data)
+    }
+
+    func checkIsFollowing(userId: String, followerId: String) async throws -> Bool {
+        let url = URL(string: "\(baseURL)/api/users/\(userId)/is-following?follower_id=\(followerId)")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+        try checkResponse(response)
+        let result = try decoder.decode([String: Bool].self, from: data)
+        return result["following"] ?? false
+    }
+
+    // MARK: - User Videos
+
+    func fetchUserVideos(userId: String, page: Int = 0) async throws -> [Video] {
+        let url = URL(string: "\(baseURL)/api/users/\(userId)/videos?page=\(page)&limit=20")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+        try checkResponse(response)
+        return try decoder.decode([Video].self, from: data)
+    }
+
+    // MARK: - Following Feed
+
+    func fetchFollowingFeed(userId: String, page: Int = 0, limit: Int = 20) async throws -> [Video] {
+        let url = URL(string: "\(baseURL)/api/videos/following-feed?user_id=\(userId)&page=\(page)&limit=\(limit)")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+        try checkResponse(response)
+        return try decoder.decode([Video].self, from: data)
+    }
+
     // MARK: - Helpers
 
     private func checkResponse(_ response: URLResponse) throws {
@@ -147,6 +187,16 @@ struct LikeResponse: Codable {
     enum CodingKeys: String, CodingKey {
         case liked
         case likeCount = "like_count"
+    }
+}
+
+struct FollowResponse: Codable {
+    let following: Bool
+    let followerCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case following
+        case followerCount = "follower_count"
     }
 }
 

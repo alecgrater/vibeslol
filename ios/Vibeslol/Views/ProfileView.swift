@@ -2,6 +2,14 @@ import SwiftUI
 
 struct ProfileView: View {
     @ObservedObject private var auth = AuthManager.shared
+    @State private var userVideos: [Video] = []
+    @State private var isLoadingVideos = false
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 2),
+        GridItem(.flexible(), spacing: 2),
+        GridItem(.flexible(), spacing: 2)
+    ]
 
     var body: some View {
         ZStack {
@@ -62,8 +70,8 @@ struct ProfileView: View {
                             .background(Color.white.opacity(0.1))
                             .padding(.horizontal, 24)
 
-                        // Empty state for videos
-                        if user.videoCount == 0 {
+                        // Video grid or empty state
+                        if userVideos.isEmpty && !isLoadingVideos {
                             VStack(spacing: 12) {
                                 Image(systemName: "video.slash")
                                     .font(.system(size: 40))
@@ -73,15 +81,42 @@ struct ProfileView: View {
                                     .foregroundColor(.white.opacity(0.3))
                             }
                             .padding(.top, 40)
+                        } else if isLoadingVideos {
+                            ProgressView()
+                                .tint(.vibePurple)
+                                .padding(.top, 40)
+                        } else {
+                            LazyVGrid(columns: columns, spacing: 2) {
+                                ForEach(userVideos) { video in
+                                    VideoGridCell(video: video)
+                                }
+                            }
+                            .padding(.horizontal, 2)
                         }
 
                         Spacer().frame(height: 100) // tab bar clearance
                     }
                 }
+                .onAppear {
+                    loadUserVideos()
+                }
             } else {
                 ProgressView()
                     .tint(.vibePurple)
             }
+        }
+    }
+
+    private func loadUserVideos() {
+        guard let userId = auth.userId else { return }
+        isLoadingVideos = true
+        Task {
+            do {
+                userVideos = try await APIClient.shared.fetchUserVideos(userId: userId)
+            } catch {
+                print("[profile] Failed to load videos: \(error.localizedDescription)")
+            }
+            isLoadingVideos = false
         }
     }
 

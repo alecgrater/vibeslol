@@ -5,63 +5,137 @@ struct FeedView: View {
     @StateObject private var viewModel = FeedViewModel()
     @StateObject private var preloader = VideoPreloader()
     @State private var currentIndex: Int = 0
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Color.black.ignoresSafeArea()
+        NavigationStack(path: $navigationPath) {
+            GeometryReader { geometry in
+                ZStack {
+                    Color.black.ignoresSafeArea()
 
-                if viewModel.videos.isEmpty {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .tint(Color.vibePurple)
-                        Text("loading vibes...")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.4))
-                    }
-                } else {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 0) {
-                            ForEach(Array(viewModel.videos.enumerated()), id: \.element.id) { index, video in
-                                VideoCell(
-                                    video: video,
-                                    playerManager: preloader.playerManager(for: video),
-                                    isActive: index == currentIndex,
-                                    screenSize: geometry.size,
-                                    viewModel: viewModel
-                                )
-                                .frame(width: geometry.size.width, height: geometry.size.height)
-                                .id(index)
-                            }
+                    if viewModel.videos.isEmpty && !viewModel.isLoading {
+                        emptyFollowingState
+                    } else if viewModel.videos.isEmpty {
+                        VStack(spacing: 16) {
+                            ProgressView()
+                                .tint(Color.vibePurple)
+                            Text("loading vibes...")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.4))
                         }
-                        .scrollTargetLayout()
-                    }
-                    .scrollTargetBehavior(.paging)
-                    .scrollPosition(id: Binding(
-                        get: { currentIndex },
-                        set: { newValue in
-                            if let newValue {
-                                let oldIndex = currentIndex
-                                currentIndex = newValue
-                                if oldIndex != newValue {
-                                    HapticsService.shared.scrollSnap()
-                                    preloader.updatePreload(
-                                        videos: viewModel.videos,
-                                        currentIndex: newValue
+                    } else {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            LazyVStack(spacing: 0) {
+                                ForEach(Array(viewModel.videos.enumerated()), id: \.element.id) { index, video in
+                                    VideoCell(
+                                        video: video,
+                                        playerManager: preloader.playerManager(for: video),
+                                        isActive: index == currentIndex,
+                                        screenSize: geometry.size,
+                                        viewModel: viewModel,
+                                        navigationPath: $navigationPath
                                     )
+                                    .frame(width: geometry.size.width, height: geometry.size.height)
+                                    .id(index)
                                 }
                             }
+                            .scrollTargetLayout()
                         }
-                    ))
-                    .ignoresSafeArea()
+                        .scrollTargetBehavior(.paging)
+                        .scrollPosition(id: Binding(
+                            get: { currentIndex },
+                            set: { newValue in
+                                if let newValue {
+                                    let oldIndex = currentIndex
+                                    currentIndex = newValue
+                                    if oldIndex != newValue {
+                                        HapticsService.shared.scrollSnap()
+                                        preloader.updatePreload(
+                                            videos: viewModel.videos,
+                                            currentIndex: newValue
+                                        )
+                                    }
+                                }
+                            }
+                        ))
+                        .ignoresSafeArea()
+                    }
+
+                    // Feed mode tabs at top
+                    VStack {
+                        feedModeTabs
+                        Spacer()
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            .onAppear {
+                viewModel.loadVideos()
+                if !viewModel.videos.isEmpty {
+                    preloader.updatePreload(videos: viewModel.videos, currentIndex: 0)
+                }
+            }
+            .navigationDestination(for: String.self) { userId in
+                UserProfileView(userId: userId)
+                    .navigationBarBackButtonHidden()
+            }
+        }
+    }
+
+    private var feedModeTabs: some View {
+        HStack(spacing: 24) {
+            Button {
+                viewModel.switchFeedMode(.forYou)
+                currentIndex = 0
+            } label: {
+                VStack(spacing: 4) {
+                    Text("For You")
+                        .font(.subheadline.bold())
+                        .foregroundColor(viewModel.feedMode == .forYou ? .white : .white.opacity(0.5))
+                    Rectangle()
+                        .fill(viewModel.feedMode == .forYou ? Color.vibePurple : Color.clear)
+                        .frame(width: 30, height: 2)
+                        .cornerRadius(1)
+                }
+            }
+
+            Button {
+                viewModel.switchFeedMode(.following)
+                currentIndex = 0
+            } label: {
+                VStack(spacing: 4) {
+                    Text("Following")
+                        .font(.subheadline.bold())
+                        .foregroundColor(viewModel.feedMode == .following ? .white : .white.opacity(0.5))
+                    Rectangle()
+                        .fill(viewModel.feedMode == .following ? Color.vibePurple : Color.clear)
+                        .frame(width: 30, height: 2)
+                        .cornerRadius(1)
                 }
             }
         }
-        .ignoresSafeArea()
-        .onAppear {
-            viewModel.loadVideos()
-            if !viewModel.videos.isEmpty {
-                preloader.updatePreload(videos: viewModel.videos, currentIndex: 0)
+        .padding(.top, 60)
+        .shadow(color: .black.opacity(0.6), radius: 4)
+    }
+
+    private var emptyFollowingState: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "person.2.slash")
+                .font(.system(size: 44))
+                .foregroundColor(.white.opacity(0.2))
+            Text("No videos from people you follow")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.4))
+            Button {
+                viewModel.switchFeedMode(.forYou)
+            } label: {
+                Text("Browse For You")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.vibePurple)
+                    .cornerRadius(20)
             }
         }
     }
@@ -75,6 +149,7 @@ struct VideoCell: View {
     let isActive: Bool
     let screenSize: CGSize
     @ObservedObject var viewModel: FeedViewModel
+    @Binding var navigationPath: NavigationPath
 
     @State private var showOverlay = true
     @State private var overlayTimer: Timer?
@@ -161,11 +236,19 @@ struct VideoCell: View {
             VStack(alignment: .leading, spacing: 6) {
                 Spacer()
 
-                Text("@\(video.username)")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .shadow(color: .black.opacity(0.6), radius: 3)
+                // Tappable username → navigate to profile
+                Button {
+                    if let authorId = video.authorId {
+                        navigationPath.append(authorId)
+                    }
+                } label: {
+                    Text("@\(video.username)")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.6), radius: 3)
+                }
+                .disabled(video.authorId == nil)
 
                 if let caption = video.caption {
                     Text(caption)

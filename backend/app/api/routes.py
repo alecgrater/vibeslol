@@ -19,6 +19,7 @@ from app.schemas import (
     CommentCreateRequest,
     CommentOut,
     CreateAnonymousUserRequest,
+    FollowOut,
     LikeOut,
     UserOut,
     VideoOut,
@@ -235,6 +236,7 @@ async def create_comment(
 def _video_out(video: Video, username: str) -> VideoOut:
     return VideoOut(
         id=video.id,
+        author_id=video.author_id,
         username=username,
         caption=video.caption,
         video_url=video.video_url,
@@ -245,3 +247,105 @@ def _video_out(video: Video, username: str) -> VideoOut:
         loop_count=video.loop_count,
         created_at=video.created_at,
     )
+
+
+# ---------- Follow ----------
+
+@router.post("/users/{user_id}/follow", response_model=FollowOut)
+async def toggle_follow(
+    user_id: str,
+    follower_id: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    if user_id == follower_id:
+        raise HTTPException(status_code=400, detail="Cannot follow yourself")
+
+    target = await db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    follower = await db.get(User, follower_id)
+    if not follower:
+        raise HTTPException(status_code=404, detail="Follower not found")
+
+    existing = await db.execute(
+        select(Follow).where(Follow.follower_id == follower_id, Follow.following_id == user_id)
+    )
+    existing_follow = existing.scalar_one_or_none()
+
+    if existing_follow:
+        await db.delete(existing_follow)
+        await db.commit()
+    else:
+        follow = Follow(follower_id=follower_id, following_id=user_id)
+        db.add(follow)
+        await db.commit()
+
+    follower_count = await db.scalar(
+        select(func.count()).where(Follow.following_id == user_id)
+    )
+    return FollowOut(following=existing_follow is None, follower_count=follower_count or 0)
+
+
+@router.get("/users/{user_id}/videos", response_model=List[VideoOut])
+async def get_user_videos(
+    user_id: str,
+    page: int = 0,
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db),
+):
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    result = await db.execute(
+        select(Video)
+        .where(Video.author_id == user_id)
+        .order_by(Video.created_at.desc())
+        .offset(page * limit)
+        .limit(limit)
+    )
+    videos = result.scalars().all()
+    return [_video_out(v, user.username) for v in videos]
+
+
+@router.get("/videos/following-feed", response_model=List[VideoOut])
+async def get_following_feed(
+    user_id: str,
+    page: int = 0,
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db),
+):
+    following_result = await db.execute(
+        select(Follow.following_id).where(Follow.follower_id == user_id)
+    )
+    following_ids = [row[0] for row in following_result.all()]
+
+    if not following_ids:
+        return []
+
+    result = await db.execute(
+        select(Video)
+        .where(Video.author_id.in_(following_ids))
+        .order_by(Video.created_at.desc())
+        .offset(page * limit)
+        .limit(limit)
+    )
+    videos = result.scalars().all()
+    out = []
+    for v in videos:
+        author = await db.get(User, v.author_id)
+        out.append(_video_out(v, author.username if author else "unknown"))
+    return out
+
+
+@router.get("/users/{user_id}/is-following")
+async def check_is_following(
+    user_id: str,
+    follower_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    existing = await db.execute(
+        select(Follow).where(Follow.follower_id == follower_id, Follow.following_id == user_id)
+    )
+    return {"following": existing.scalar_one_or_none() is not None}

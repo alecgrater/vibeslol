@@ -27,12 +27,14 @@ vibeslol/
 │   │   ├── CameraView.swift       # Camera recording screen (record, countdown, preview)
 │   │   ├── CameraPreviewView.swift # AVCaptureVideoPreviewLayer UIViewRepresentable
 │   │   ├── VideoTrimmerView.swift # Trim-to-6s scrubber UI with thumbnail strip
-│   │   └── CommentSheetView.swift # Comment bottom sheet with posting
+│   │   ├── CommentSheetView.swift # Comment bottom sheet with posting
+│   │   └── UserProfileView.swift  # Other user's profile with video grid + follow button
 │   ├── ViewModels/
 │   │   ├── FeedViewModel.swift    # Feed data + analytics stubs
 │   │   ├── CameraViewModel.swift  # AVCaptureSession, recording, timer logic
 │   │   └── VideoTrimmerViewModel.swift # Thumbnail generation, trim export logic
 │   │   └── CommentViewModel.swift # Comment fetching, posting logic
+│   │   └── UserProfileViewModel.swift # Other user profile + follow logic
 │   ├── Models/
 │   │   ├── Video.swift            # Video model (resolvedURL for bundle/remote)
 │   │   ├── User.swift             # User model with anonymous support
@@ -103,7 +105,7 @@ vibeslol/
 - [x] **Feature C: Backend API — Users + Videos** — SQLAlchemy models for User/Video/Like/Follow. API endpoints: POST /users/anonymous, GET /videos/feed, POST /videos/{id}/like, POST /videos (upload). Wire up APIClient.swift.
 - [x] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab. — On first app launch, auto-create anonymous account via POST /api/users/anonymous (pass device_token). Store user ID + device token in Keychain. Wire up APIClient.likeVideo with stored userId. Show username in Profile tab.
 - [x] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
-- [ ] **Feature F: User Profiles + Follow System** — Profile screen showing user's videos in a grid. Follow/unfollow button. Follower/following counts. Following tab in feed.
+- [x] **Feature F: User Profiles + Follow System** — Profile screen showing user's videos in a grid. Follow/unfollow button. Follower/following counts. Following tab in feed.
 - [ ] **Feature G: Algorithm V1** — Track watch time, loops, skips. Build simple recommendation engine (popularity + collaborative filtering). Replace mock feed with algorithm-served feed.
 - [ ] **Feature H: Polish + Launch Prep** — UI animations refinement, content moderation (report/block), analytics dashboard, App Store submission prep.
 
@@ -172,6 +174,18 @@ vibeslol/
 - VideoCell now takes viewModel as @ObservedObject to wire like/comment/share. isLiked is computed from viewModel.likedVideoIds.
 - Comment.timeAgo computed property formats relative time (s/m/h/d).
 - Gotcha for Feature F: ProfileView still shows static 0 counts. Feature F should fetch user from API to get real follower/following/video counts. Also, the comment sheet allows anonymous users to comment — PRD says only non-anonymous users should be able to comment. Feature F or a later polish pass should gate this.
+
+**Feature F (User Profiles + Follow System):**
+- New files: UserProfileView.swift (Views), UserProfileViewModel.swift (ViewModels)
+- Modified: ProfileView.swift (added video grid via LazyVGrid, loads user's videos from API on appear), FeedView.swift (added For You/Following tab switcher at top, wrapped in NavigationStack, tappable @username navigates to UserProfileView, added emptyFollowingState for no-follow-content), FeedViewModel.swift (added FeedMode enum + switchFeedMode + loadFollowingFeed support), APIClient.swift (added toggleFollow, checkIsFollowing, fetchUserVideos, fetchFollowingFeed endpoints + FollowResponse type), Video.swift (added authorId: String? field + updated all mock constructors), routes.py (POST /api/users/{id}/follow toggle, GET /api/users/{id}/videos, GET /api/videos/following-feed, GET /api/users/{id}/is-following), schemas.py (FollowOut schema, author_id added to VideoOut), project.pbxproj (2 new files)
+- Backend follow toggle: POST /api/users/{user_id}/follow accepts follower_id via Form, checks for existing Follow row, creates or deletes it, returns FollowOut(following, follower_count). Self-follow blocked with 400.
+- UserProfileView: shows other user's profile with avatar, @username, follow/unfollow button (vibePurple fill when not following, outline when following), stats row, video grid (3-column LazyVGrid with 9:16 aspect ratio cells). Wrapped in NavigationStack for back button.
+- UserProfileViewModel: loads user + videos + follow status concurrently. toggleFollow uses optimistic update pattern (revert on API failure). Uses HapticsService.mediumTap() on follow.
+- FeedView now has NavigationStack with .navigationDestination(for: String.self) routing authorId to UserProfileView. Feed mode tabs (For You / Following) float at the top with purple underline indicator.
+- Video.authorId is Optional<String> to maintain backward compatibility with bundled mock videos (which have no author).
+- VideoOut schema now includes author_id so iOS can navigate from feed → user profile.
+- Gotcha for Feature G: The following-feed endpoint is reverse-chronological like the main feed. Algorithm V1 should improve both feeds with recommendation logic. The FeedMode enum and switchFeedMode pattern in FeedViewModel make it easy to add algorithm-served feeds later.
+- Gotcha for Feature G: Comment sheet still allows anonymous users to comment — PRD says only non-anonymous users should be able to comment. Feature H polish pass should gate this.
 
 ### INSTRUCTIONS FOR AUTONOMOUS BUILD
 When starting a new session after /clear:

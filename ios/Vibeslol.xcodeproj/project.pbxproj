@@ -38,6 +38,8 @@
 		AA000029 /* Comment.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000029; };
 		AA000030 /* CommentSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000030; };
 		AA000031 /* CommentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000031; };
+		AA000032 /* UserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000032; };
+		AA000033 /* UserProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000033; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +74,8 @@
 		AB000029 /* Comment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comment.swift; sourceTree = "<group>"; };
 		AB000030 /* CommentSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentSheetView.swift; sourceTree = "<group>"; };
 		AB000031 /* CommentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentViewModel.swift; sourceTree = "<group>"; };
+		AB000032 /* UserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileView.swift; sourceTree = "<group>"; };
+		AB000033 /* UserProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileViewModel.swift; sourceTree = "<group>"; };
 		AC000001 /* Vibeslol.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vibeslol.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -130,6 +134,7 @@
 				AB000024 /* VideoTrimmerView.swift */,
 				AB000028 /* ProfileView.swift */,
 				AB000030 /* CommentSheetView.swift */,
+				AB000032 /* UserProfileView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -141,6 +146,7 @@
 				AB000022 /* CameraViewModel.swift */,
 				AB000025 /* VideoTrimmerViewModel.swift */,
 				AB000031 /* CommentViewModel.swift */,
+				AB000033 /* UserProfileViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -303,6 +309,8 @@
 				AA000029 /* Comment.swift in Sources */,
 				AA000030 /* CommentSheetView.swift in Sources */,
 				AA000031 /* CommentViewModel.swift in Sources */,
+				AA000032 /* UserProfileView.swift in Sources */,
+				AA000033 /* UserProfileViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
