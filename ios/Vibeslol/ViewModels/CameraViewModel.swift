@@ -1,6 +1,8 @@
 import AVFoundation
 import Combine
+import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 @MainActor
 class CameraViewModel: NSObject, ObservableObject {
@@ -13,6 +15,7 @@ class CameraViewModel: NSObject, ObservableObject {
         case recording   // Actively recording
         case preview     // Showing recorded video for review
         case denied      // Camera permission denied
+        case trimming    // Showing trim-to-6s scrubber for picked video
     }
 
     @Published var state: CameraState = .setup
@@ -21,6 +24,8 @@ class CameraViewModel: NSObject, ObservableObject {
     @Published var recordedVideoURL: URL?
     @Published var isFlashOn = false
     @Published var isFrontCamera = true
+    @Published var pickedVideoURL: URL?  // Video picked from library that needs trimming
+    @Published var showPhotoPicker = false
 
     // MARK: - AVFoundation
 
@@ -246,6 +251,45 @@ class CameraViewModel: NSObject, ObservableObject {
         captureSession.commitConfiguration()
     }
 
+    // MARK: - Photo Library Pick
+
+    func handlePickedVideo(url: URL) {
+        Task {
+            let asset = AVAsset(url: url)
+            do {
+                let duration = try await asset.load(.duration).seconds
+                if duration <= CameraViewModel.maxDuration + 0.5 {
+                    // Short enough — go straight to preview
+                    recordedVideoURL = url
+                    state = .preview
+                    HapticsService.shared.success()
+                } else {
+                    // Needs trimming
+                    pickedVideoURL = url
+                    state = .trimming
+                    HapticsService.shared.lightTap()
+                }
+            } catch {
+                print("[camera] failed to load picked video duration: \(error)")
+                state = .ready
+            }
+        }
+    }
+
+    func handleTrimComplete(url: URL) {
+        recordedVideoURL = url
+        pickedVideoURL = nil
+        state = .preview
+    }
+
+    func cancelTrim() {
+        if let url = pickedVideoURL {
+            try? FileManager.default.removeItem(at: url)
+        }
+        pickedVideoURL = nil
+        state = .ready
+    }
+
     // MARK: - Cleanup
 
     func tearDown() {
@@ -288,6 +332,24 @@ extension CameraViewModel: AVCaptureFileOutputRecordingDelegate {
                 state = .preview
                 HapticsService.shared.success()
             }
+        }
+    }
+}
+
+// MARK: - MovieTransferable
+
+struct MovieTransferable: Transferable {
+    let url: URL
+
+    static var transferRepresentation: some TransferRepresentation {
+        FileRepresentation(contentType: .movie) { movie in
+            SentTransferredFile(movie.url)
+        } importing: { received in
+            let tempURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("mov")
+            try FileManager.default.copyItem(at: received.file, to: tempURL)
+            return Self(url: tempURL)
         }
     }
 }

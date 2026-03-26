@@ -25,10 +25,12 @@ vibeslol/
 │   │   ├── TabBarView.swift       # Translucent bottom tab bar
 │   │   ├── VideoPlayerView.swift  # AVPlayerLayer UIViewRepresentable
 │   │   ├── CameraView.swift       # Camera recording screen (record, countdown, preview)
-│   │   └── CameraPreviewView.swift # AVCaptureVideoPreviewLayer UIViewRepresentable
+│   │   ├── CameraPreviewView.swift # AVCaptureVideoPreviewLayer UIViewRepresentable
+│   │   └── VideoTrimmerView.swift # Trim-to-6s scrubber UI with thumbnail strip
 │   ├── ViewModels/
 │   │   ├── FeedViewModel.swift    # Feed data + analytics stubs
-│   │   └── CameraViewModel.swift  # AVCaptureSession, recording, timer logic
+│   │   ├── CameraViewModel.swift  # AVCaptureSession, recording, timer logic
+│   │   └── VideoTrimmerViewModel.swift # Thumbnail generation, trim export logic
 │   ├── Models/
 │   │   ├── Video.swift            # Video model (resolvedURL for bundle/remote)
 │   │   └── User.swift             # User model with anonymous support
@@ -93,7 +95,7 @@ vibeslol/
 
 ### BUILD QUEUE (do these in order, one per session)
 - [x] **Feature A: Camera + Recording Screen** — In-app camera with countdown timer, record 6s video, preview before posting. Add CameraView.swift, CameraViewModel.swift. Wire up the Record tab.
-- [ ] **Feature B: Trim-to-6s Tool** — When uploading from camera roll, let user select a 6s window from a longer video. Scrubber UI with preview. Wire up the photo library button already in CameraView.swift.
+- [x] **Feature B: Trim-to-6s Tool** — When uploading from camera roll, let user select a 6s window from a longer video. Scrubber UI with preview. Wire up the photo library button already in CameraView.swift.
 - [ ] **Feature C: Backend API — Users + Videos** — SQLAlchemy models for User/Video/Like/Follow. API endpoints: POST /users/anonymous, GET /videos/feed, POST /videos/{id}/like, POST /videos (upload). Wire up APIClient.swift.
 - [ ] **Feature D: Auto-Account Generation** — On first app launch, auto-create anonymous account via API. Store device token in Keychain. Show username in Profile tab.
 - [ ] **Feature E: Like/Comment/Share Wired Up** — Connect like button to API. Add comment bottom sheet with real comment posting. Share via native iOS share sheet.
@@ -118,6 +120,19 @@ vibeslol/
 - Front/back camera flip supported, video mirroring for front camera
 - NSCameraUsageDescription + NSMicrophoneUsageDescription added via INFOPLIST_KEY build settings
 - Gotcha for Feature B: CameraView has a photo library button placeholder (photo.on.rectangle icon) that should be wired to the trim-to-6s picker
+
+**Feature B (Trim-to-6s Tool):**
+- New files: VideoTrimmerView.swift (Views), VideoTrimmerViewModel.swift (ViewModels)
+- Modified: CameraView.swift (replaced photo library placeholder with PhotosPicker, added .trimming state rendering), CameraViewModel.swift (added .trimming state, pickedVideoURL, handlePickedVideo/handleTrimComplete/cancelTrim methods, MovieTransferable struct), project.pbxproj (2 new files + NSPhotoLibraryUsageDescription)
+- PhotosPicker (PhotosUI) used for video selection — filters to .videos only
+- MovieTransferable implements Transferable protocol to load video from PhotosPickerItem as a temp file URL
+- Videos <= 6.5s go straight to preview; longer videos enter trimmer
+- VideoTrimmerViewModel generates 20 thumbnail frames via AVAssetImageGenerator, manages scrub position (0-1 normalized), exports trimmed clip via AVAssetExportSession
+- VideoTrimmerView shows: looping video preview of selected 6s window, thumbnail strip with bright selection window (dimmed outside), grab handles, purple glow border, time labels, Cancel/Use Clip buttons
+- Player uses addPeriodicTimeObserver to loop within the 6s window (seeks back to startTime when reaching endTime)
+- Drag gesture on scrubber tracks dragStartScrub to handle incremental translation correctly
+- NSPhotoLibraryUsageDescription added to both Debug and Release build settings
+- Gotcha for Feature C: MovieTransferable is defined in CameraViewModel.swift — if it needs to be reused elsewhere, consider moving to Models/
 
 ### INSTRUCTIONS FOR AUTONOMOUS BUILD
 When starting a new session after /clear:

@@ -1,10 +1,12 @@
 import AVFoundation
 import AVKit
+import PhotosUI
 import SwiftUI
 
 struct CameraView: View {
     @StateObject private var viewModel = CameraViewModel()
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedItem: PhotosPickerItem?
 
     var body: some View {
         ZStack {
@@ -33,6 +35,19 @@ struct CameraView: View {
             case .preview:
                 if let url = viewModel.recordedVideoURL {
                     videoPreviewView(url: url)
+                }
+
+            case .trimming:
+                if let url = viewModel.pickedVideoURL {
+                    VideoTrimmerView(
+                        url: url,
+                        onComplete: { trimmedURL in
+                            viewModel.handleTrimComplete(url: trimmedURL)
+                        },
+                        onCancel: {
+                            viewModel.cancelTrim()
+                        }
+                    )
                 }
             }
         }
@@ -103,13 +118,23 @@ struct CameraView: View {
                 .background(Capsule().fill(.ultraThinMaterial).environment(\.colorScheme, .dark))
 
             HStack(spacing: 60) {
-                // Upload from library placeholder
-                Button {
-                    // TODO: Feature B — photo library picker
-                } label: {
+                // Upload from library
+                PhotosPicker(
+                    selection: $selectedItem,
+                    matching: .videos
+                ) {
                     Image(systemName: "photo.on.rectangle")
                         .font(.title2)
                         .foregroundColor(.white.opacity(0.7))
+                }
+                .onChange(of: selectedItem) { _, item in
+                    guard let item else { return }
+                    Task {
+                        if let movie = try? await item.loadTransferable(type: MovieTransferable.self) {
+                            viewModel.handlePickedVideo(url: movie.url)
+                        }
+                        selectedItem = nil
+                    }
                 }
 
                 // Record button — tap for countdown, long press for immediate

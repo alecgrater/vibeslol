@@ -30,6 +30,8 @@
 		AA000021 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000021; };
 		AA000022 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000022; };
 		AA000023 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000023; };
+		AA000024 /* VideoTrimmerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000024; };
+		AA000025 /* VideoTrimmerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000025; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -56,6 +58,8 @@
 		AB000021 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		AB000022 /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
 		AB000023 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		AB000024 /* VideoTrimmerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTrimmerView.swift; sourceTree = "<group>"; };
+		AB000025 /* VideoTrimmerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTrimmerViewModel.swift; sourceTree = "<group>"; };
 		AC000001 /* Vibeslol.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vibeslol.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -111,6 +115,7 @@
 				AB000014 /* VideoPlayerView.swift */,
 				AB000021 /* CameraView.swift */,
 				AB000023 /* CameraPreviewView.swift */,
+				AB000024 /* VideoTrimmerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -120,6 +125,7 @@
 			children = (
 				AB000007 /* FeedViewModel.swift */,
 				AB000022 /* CameraViewModel.swift */,
+				AB000025 /* VideoTrimmerViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -271,6 +277,8 @@
 				AA000021 /* CameraView.swift in Sources */,
 				AA000022 /* CameraViewModel.swift in Sources */,
 				AA000023 /* CameraPreviewView.swift in Sources */,
+				AA000024 /* VideoTrimmerView.swift in Sources */,
+				AA000025 /* VideoTrimmerViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,6 +419,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Vibeslol needs camera access to record 6-second videos.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vibeslol needs microphone access to record audio with your videos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Vibeslol needs photo library access to import videos for trimming.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -443,6 +452,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Vibeslol needs camera access to record 6-second videos.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Vibeslol needs microphone access to record audio with your videos.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Vibeslol needs photo library access to import videos for trimming.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
